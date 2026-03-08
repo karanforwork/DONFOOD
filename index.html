@@ -60,7 +60,6 @@ background:red;
 border-radius:50%;
 pointer-events:none;
 z-index:3;
-transition:transform 0.05s linear;
 }
 
 .container{
@@ -71,8 +70,15 @@ z-index:2;
 }
 
 .food{
-font-size:42px;
-margin-bottom:15px;
+font-size:38px;
+margin-bottom:10px;
+}
+
+#foodImage{
+width:120px;
+height:120px;
+object-fit:contain;
+margin-bottom:10px;
 }
 
 button{
@@ -102,36 +108,38 @@ width:260px;
 <div id="cursor"></div>
 
 <div class="container">
+
+<img id="foodImage">
+
 <div id="food" class="food"></div>
 
 <button class="green" id="g">เขียว</button>
 <button class="yellow" id="y">เหลือง</button>
 <button class="red" id="r">แดง</button>
+
 </div>
 
 <script>
 
 const foods=[
-{name:"ผักบุ้ง",type:"green"},
-{name:"แครอท",type:"green"},
-{name:"บรอกโคลี",type:"green"},
-{name:"แตงกวา",type:"green"},
-{name:"ผักกาด",type:"green"},
-{name:"กล้วย",type:"yellow"},
-{name:"ข้าว",type:"yellow"},
-{name:"มันฝรั่ง",type:"yellow"},
-{name:"ขนมปัง",type:"yellow"},
-{name:"ไข่",type:"yellow"},
-{name:"เค้ก",type:"red"},
-{name:"ไอศกรีม",type:"red"},
-{name:"น้ำอัดลม",type:"red"},
-{name:"ลูกอม",type:"red"},
-{name:"โดนัท",type:"red"},
-{name:"มะม่วง",type:"yellow"},
-{name:"ส้ม",type:"yellow"},
-{name:"ผักคะน้า",type:"green"},
-{name:"ช็อกโกแลต",type:"red"},
-{name:"เฟรนช์ฟราย",type:"red"}
+{name:"ผักบุ้ง",type:"green",img:"🥬"},
+{name:"แครอท",type:"green",img:"🥕"},
+{name:"บรอกโคลี",type:"green",img:"🥦"},
+{name:"แตงกวา",type:"green",img:"🥒"},
+{name:"กล้วย",type:"yellow",img:"🍌"},
+{name:"ข้าว",type:"yellow",img:"🍚"},
+{name:"มันฝรั่ง",type:"yellow",img:"🥔"},
+{name:"ขนมปัง",type:"yellow",img:"🍞"},
+{name:"ไข่",type:"yellow",img:"🥚"},
+{name:"มะม่วง",type:"yellow",img:"🥭"},
+{name:"ส้ม",type:"yellow",img:"🍊"},
+{name:"เค้ก",type:"red",img:"🍰"},
+{name:"ไอศกรีม",type:"red",img:"🍦"},
+{name:"น้ำอัดลม",type:"red",img:"🥤"},
+{name:"ลูกอม",type:"red",img:"🍬"},
+{name:"โดนัท",type:"red",img:"🍩"},
+{name:"ช็อกโกแลต",type:"red",img:"🍫"},
+{name:"เฟรนช์ฟราย",type:"red",img:"🍟"}
 ];
 
 let current;
@@ -139,16 +147,25 @@ let score=0;
 let time=60;
 
 function newFood(){
+
 current=foods[Math.floor(Math.random()*foods.length)];
+
 document.getElementById("food").innerText=current.name;
+
+document.getElementById("foodImage").innerText=current.img;
+
 }
 
 function answer(type){
+
 if(type==current.type){
 score++;
-document.getElementById("score").innerText="คะแนน: "+score;
 }
+
+document.getElementById("score").innerText="คะแนน: "+score;
+
 newFood();
+
 }
 
 document.getElementById("g").onclick=()=>answer("green");
@@ -158,13 +175,19 @@ document.getElementById("r").onclick=()=>answer("red");
 newFood();
 
 setInterval(()=>{
+
 time--;
+
 document.getElementById("timer").innerText="เวลา: "+time;
 
 if(time<=0){
+
 alert("หมดเวลา คะแนน "+score);
+
 location.reload();
+
 }
+
 },1000);
 
 const video=document.getElementById("video");
@@ -184,7 +207,6 @@ minTrackingConfidence:0.75
 let hoverButton=null;
 let hoverStart=0;
 
-/* smoothing cursor */
 let smoothX=0;
 let smoothY=0;
 
@@ -199,9 +221,8 @@ let p=results.multiHandLandmarks[0][8];
 let targetX=(1-p.x)*window.innerWidth;
 let targetY=p.y*window.innerHeight;
 
-/* smooth movement */
-smoothX = smoothX*0.7 + targetX*0.3;
-smoothY = smoothY*0.7 + targetY*0.3;
+smoothX=smoothX*0.75+targetX*0.25;
+smoothY=smoothY*0.75+targetY*0.25;
 
 cursor.style.left=smoothX+"px";
 cursor.style.top=smoothY+"px";
@@ -223,9 +244,11 @@ camera.start();
 function checkHover(x,y){
 
 let buttons=document.querySelectorAll("button");
+
 let found=null;
 
 buttons.forEach(btn=>{
+
 let r=btn.getBoundingClientRect();
 
 if(
@@ -236,6 +259,7 @@ y<r.bottom
 ){
 found=btn;
 }
+
 });
 
 if(found){
@@ -251,7 +275,9 @@ hoverButton=null;
 }
 
 }else{
+
 hoverButton=null;
+
 }
 
 }
