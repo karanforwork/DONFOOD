@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Lion Food</title>
+<title>Lion Food PRO</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -19,27 +19,21 @@ overflow:hidden;
 }
 
 h1{
-position:absolute;
-top:10px;
-width:100%;
-font-size:42px;
-z-index:2;
+font-size:50px;
 }
 
-#timer{
-position:absolute;
-top:80px;
-left:20px;
-font-size:30px;
-z-index:2;
-}
-
-#score{
-position:absolute;
-top:80px;
-right:20px;
-font-size:30px;
-z-index:2;
+.screen{
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+background:rgba(0,0,0,0.9);
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:10;
 }
 
 #video{
@@ -62,6 +56,22 @@ pointer-events:none;
 z-index:3;
 }
 
+#timer{
+position:absolute;
+top:80px;
+left:20px;
+font-size:30px;
+z-index:2;
+}
+
+#score{
+position:absolute;
+top:80px;
+right:20px;
+font-size:30px;
+z-index:2;
+}
+
 .container{
 position:absolute;
 bottom:40px;
@@ -70,15 +80,16 @@ z-index:2;
 }
 
 .food{
-font-size:38px;
+font-size:40px;
 margin-bottom:10px;
 }
 
 #foodImage{
-width:120px;
-height:120px;
-object-fit:contain;
-margin-bottom:10px;
+width:150px;
+height:150px;
+object-fit:cover;
+border-radius:20px;
+background:white;
 }
 
 button{
@@ -99,13 +110,51 @@ width:260px;
 
 <body>
 
+<!-- START SCREEN -->
+
+<div id="startScreen" class="screen">
+
 <h1>🦁 Lion Food</h1>
 
+<p style="font-size:30px;">ชี้มือไปที่ปุ่มเพื่อเริ่มเกม</p>
+
+<button id="startBtn">▶️ เริ่มเกม</button>
+
+</div>
+
+
+<!-- END SCREEN -->
+
+<div id="endScreen" class="screen" style="display:none;">
+
+<h1>🏆 จบเกม</h1>
+
+<div id="finalScore" style="font-size:40px;margin:20px;"></div>
+
+<button id="restartBtn">🔁 เล่นอีกครั้ง</button>
+
+</div>
+
+
+<h1 style="position:absolute;top:10px;width:100%;z-index:2;">🦁 Lion Food</h1>
+
 <div id="timer">เวลา: 60</div>
+
 <div id="score">คะแนน: 0</div>
 
 <video id="video" autoplay playsinline></video>
+
 <div id="cursor"></div>
+
+
+<audio id="bgMusic" autoplay loop>
+<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3">
+</audio>
+
+<audio id="correctSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b1f63.mp3"></audio>
+
+<audio id="wrongSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_2a0a6f1f70.mp3"></audio>
+
 
 <div class="container">
 
@@ -114,39 +163,64 @@ width:260px;
 <div id="food" class="food"></div>
 
 <button class="green" id="g">เขียว</button>
+
 <button class="yellow" id="y">เหลือง</button>
+
 <button class="red" id="r">แดง</button>
 
 </div>
 
+
 <script>
 
+let gameStarted=false;
 
 const foods=[
+
 {name:"🥬 ผักบุ้ง",type:"green",img:"https://upload.wikimedia.org/wikipedia/commons/3/3f/Water_spinach.jpg"},
+
 {name:"🥕 แครอท",type:"green",img:"https://upload.wikimedia.org/wikipedia/commons/7/7e/Carrots.jpg"},
+
 {name:"🥦 บรอกโคลี",type:"green",img:"https://upload.wikimedia.org/wikipedia/commons/0/03/Broccoli_and_cross_section_edit.jpg"},
+
 {name:"🥒 แตงกวา",type:"green",img:"https://upload.wikimedia.org/wikipedia/commons/9/96/Cucumbers.jpg"},
 
+
 {name:"🍌 กล้วย",type:"yellow",img:"https://upload.wikimedia.org/wikipedia/commons/8/8a/Banana-Single.jpg"},
+
 {name:"🍚 ข้าว",type:"yellow",img:"https://upload.wikimedia.org/wikipedia/commons/6/6f/Rice.jpg"},
+
 {name:"🥔 มันฝรั่ง",type:"yellow",img:"https://upload.wikimedia.org/wikipedia/commons/a/ab/Patates.jpg"},
+
 {name:"🍞 ขนมปัง",type:"yellow",img:"https://upload.wikimedia.org/wikipedia/commons/0/0f/Bread.jpg"},
+
 {name:"🥚 ไข่",type:"yellow",img:"https://upload.wikimedia.org/wikipedia/commons/7/7b/Eggs.jpg"},
+
 {name:"🥭 มะม่วง",type:"yellow",img:"https://upload.wikimedia.org/wikipedia/commons/9/90/Hapus_Mango.jpg"},
+
 {name:"🍊 ส้ม",type:"yellow",img:"https://upload.wikimedia.org/wikipedia/commons/c/c4/Orange-Fruit-Pieces.jpg"},
 
+
 {name:"🍰 เค้ก",type:"red",img:"https://upload.wikimedia.org/wikipedia/commons/6/6b/Chocolate_cake.jpg"},
+
 {name:"🍦 ไอศกรีม",type:"red",img:"https://upload.wikimedia.org/wikipedia/commons/2/2a/Ice_Cream_dessert.jpg"},
+
 {name:"🥤 น้ำอัดลม",type:"red",img:"https://upload.wikimedia.org/wikipedia/commons/3/3a/Soda.jpg"},
+
 {name:"🍬 ลูกอม",type:"red",img:"https://upload.wikimedia.org/wikipedia/commons/2/29/Candy.jpg"},
+
 {name:"🍩 โดนัท",type:"red",img:"https://upload.wikimedia.org/wikipedia/commons/a/a5/Glazed-Donut.jpg"},
+
 {name:"🍫 ช็อกโกแลต",type:"red",img:"https://upload.wikimedia.org/wikipedia/commons/7/70/Chocolate.jpg"},
+
 {name:"🍟 เฟรนช์ฟราย",type:"red",img:"https://upload.wikimedia.org/wikipedia/commons/a/a8/Fries.jpg"}
+
 ];
 
 let current;
+
 let score=0;
+
 let time=60;
 
 function newFood(){
@@ -155,14 +229,24 @@ current=foods[Math.floor(Math.random()*foods.length)];
 
 document.getElementById("food").innerText=current.name;
 
-document.getElementById("foodImage").innerText=current.img;
+document.getElementById("foodImage").src=current.img;
 
 }
 
 function answer(type){
 
+if(!gameStarted)return;
+
 if(type==current.type){
+
 score++;
+
+document.getElementById("correctSound").play();
+
+}else{
+
+document.getElementById("wrongSound").play();
+
 }
 
 document.getElementById("score").innerText="คะแนน: "+score;
@@ -172,12 +256,33 @@ newFood();
 }
 
 document.getElementById("g").onclick=()=>answer("green");
+
 document.getElementById("y").onclick=()=>answer("yellow");
+
 document.getElementById("r").onclick=()=>answer("red");
+
+
+document.getElementById("startBtn").onclick=()=>{
+
+document.getElementById("startScreen").style.display="none";
+
+gameStarted=true;
 
 newFood();
 
+};
+
+
+document.getElementById("restartBtn").onclick=()=>{
+
+location.reload();
+
+};
+
+
 setInterval(()=>{
+
+if(!gameStarted)return;
 
 time--;
 
@@ -185,64 +290,95 @@ document.getElementById("timer").innerText="เวลา: "+time;
 
 if(time<=0){
 
-alert("หมดเวลา คะแนน "+score);
+document.getElementById("finalScore").innerText="คะแนนของคุณ: "+score;
 
-location.reload();
+document.getElementById("endScreen").style.display="flex";
+
+gameStarted=false;
 
 }
 
 },1000);
 
+
 const video=document.getElementById("video");
+
 const cursor=document.getElementById("cursor");
 
+
 const hands=new Hands({
+
 locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+
 });
+
 
 hands.setOptions({
+
 maxNumHands:1,
+
 modelComplexity:1,
+
 minDetectionConfidence:0.75,
+
 minTrackingConfidence:0.75
+
 });
 
+
 let hoverButton=null;
+
 let hoverStart=0;
 
 let smoothX=0;
+
 let smoothY=0;
+
 
 hands.onResults(results=>{
 
 if(!results.multiHandLandmarks || results.multiHandLandmarks.length==0){
+
 return;
+
 }
 
 let p=results.multiHandLandmarks[0][8];
 
 let targetX=(1-p.x)*window.innerWidth;
+
 let targetY=p.y*window.innerHeight;
 
 smoothX=smoothX*0.75+targetX*0.25;
+
 smoothY=smoothY*0.75+targetY*0.25;
 
 cursor.style.left=smoothX+"px";
+
 cursor.style.top=smoothY+"px";
 
 checkHover(smoothX,smoothY);
 
 });
 
+
 const camera=new Camera(video,{
+
 onFrame:async()=>{
+
 await hands.send({image:video});
+
 },
+
 width:1280,
+
 height:720
+
 });
 
+
 camera.start();
+
 
 function checkHover(x,y){
 
@@ -255,26 +391,40 @@ buttons.forEach(btn=>{
 let r=btn.getBoundingClientRect();
 
 if(
+
 x>r.left &&
+
 x<r.right &&
+
 y>r.top &&
+
 y<r.bottom
+
 ){
+
 found=btn;
+
 }
 
 });
 
+
 if(found){
 
 if(found!==hoverButton){
+
 hoverButton=found;
+
 hoverStart=Date.now();
+
 }
 
 if(Date.now()-hoverStart>800){
+
 found.click();
+
 hoverButton=null;
+
 }
 
 }else{
@@ -284,6 +434,8 @@ hoverButton=null;
 }
 
 }
+
+document.getElementById("bgMusic").volume=0.3;
 
 </script>
 
