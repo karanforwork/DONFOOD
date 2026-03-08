@@ -2,7 +2,6 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>เกมอาหาร 3 สี</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
@@ -10,234 +9,196 @@
 
 <style>
 body{
-margin:0;
-overflow:hidden;
 font-family:sans-serif;
 text-align:center;
-color:white;
+background:#f2f2f2;
 }
 
-video{
-position:fixed;
-top:0;
+h1{
+font-size:40px;
+}
+
+#video{
+position:absolute;
 left:0;
-width:100%;
-height:100%;
-object-fit:cover;
+top:0;
 transform:scaleX(-1);
-z-index:-1;
 }
 
-#food{
-font-size:70px;
-margin-top:120px;
-}
-
-.score{
+#cursor{
 position:absolute;
-top:20px;
-right:20px;
-font-size:28px;
-}
-
-.timer{
-position:absolute;
-top:20px;
-left:50%;
-transform:translateX(-50%);
-font-size:36px;
-background:black;
-padding:10px 20px;
-border-radius:20px;
-}
-
-.choice{
-position:absolute;
-width:260px;
-height:260px;
+width:40px;
+height:40px;
+background:red;
 border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:60px;
-color:white;
+pointer-events:none;
 }
 
-.left{left:5%;top:50%;transform:translateY(-50%)}
-.center{left:50%;top:65%;transform:translateX(-50%)}
-.right{right:5%;top:50%;transform:translateY(-50%)}
-
-.green{background:#2ecc71}
-.yellow{background:#f1c40f;color:black}
-.red{background:#e74c3c}
-
-#mode{
-position:absolute;
-top:20px;
-left:20px;
-z-index:2;
+.container{
+margin-top:420px;
 }
 
-#leaderboard{
-position:absolute;
-bottom:10px;
-left:50%;
-transform:translateX(-50%);
-background:rgba(0,0,0,0.6);
-padding:10px 20px;
-border-radius:10px;
-font-size:18px;
+.food{
+font-size:36px;
+margin:10px;
+}
+
+button{
+font-size:30px;
+padding:25px;
+margin:15px;
+border:none;
+border-radius:12px;
+width:260px;
+}
+
+.green{background:#4CAF50;color:white}
+.yellow{background:#FFC107}
+.red{background:#F44336;color:white}
+
+#score{
+font-size:30px;
+margin-top:10px;
+}
+
+#timer{
+font-size:28px;
 }
 </style>
 </head>
 
 <body>
 
-<select id="mode">
-<option value="click">โหมดคลิก</option>
-<option value="hand">โหมดมือ</option>
-</select>
+<h1>🍎 เกมอาหาร 3 สี</h1>
+<div id="timer">เวลา: 60</div>
+<div id="score">คะแนน: 0</div>
 
-<video id="video" autoplay playsinline></video>
+<video id="video" width="640" height="480" autoplay></video>
+<div id="cursor"></div>
 
-<div class="timer" id="timer">60</div>
-<div class="score">คะแนน: <span id="score">0</span></div>
+<div class="container">
+<div id="food" class="food"></div>
 
-<div id="food"></div>
-
-<div id="green" class="choice green left">เขียว</div>
-<div id="yellow" class="choice yellow center">เหลือง</div>
-<div id="red" class="choice red right">แดง</div>
-
-<div id="leaderboard"></div>
+<button class="green" id="g">เขียว</button>
+<button class="yellow" id="y">เหลือง</button>
+<button class="red" id="r">แดง</button>
+</div>
 
 <script>
 
 const foods=[
+{name:"ผักบุ้ง",type:"green"},
+{name:"แครอท",type:"green"},
+{name:"บรอกโคลี",type:"green"},
+{name:"แตงกวา",type:"green"},
+{name:"ผักกาด",type:"green"},
+{name:"กล้วย",type:"yellow"},
+{name:"ข้าว",type:"yellow"},
+{name:"มันฝรั่ง",type:"yellow"},
+{name:"ขนมปัง",type:"yellow"},
+{name:"ไข่",type:"yellow"},
+{name:"เค้ก",type:"red"},
+{name:"ไอศกรีม",type:"red"},
+{name:"น้ำอัดลม",type:"red"},
+{name:"ลูกอม",type:"red"},
+{name:"โดนัท",type:"red"},
+{name:"มะม่วง",type:"yellow"},
+{name:"ส้ม",type:"yellow"},
+{name:"ผักคะน้า",type:"green"},
+{name:"ช็อกโกแลต",type:"red"},
+{name:"เฟรนช์ฟราย",type:"red"}
+];
 
-{name:"แอปเปิล 🍎",color:"green"},
-{name:"กล้วย 🍌",color:"green"},
-{name:"แตงโม 🍉",color:"green"},
-{name:"บรอกโคลี 🥦",color:"green"},
-{name:"แครอท 🥕",color:"green"},
-{name:"แตงกวา 🥒",color:"green"},
+let current;
+let score=0;
+let time=60;
 
-{name:"ข้าว 🍚",color:"yellow"},
-{name:"ไข่ 🍳",color:"yellow"},
-{name:"นม 🥛",color:"yellow"},
-{name:"ข้าวโพด 🌽",color:"yellow"},
-{name:"มันฝรั่ง 🥔",color:"yellow"},
-{name:"ขนมปัง 🍞",color:"yellow"},
-
-{name:"โดนัท 🍩",color:"red"},
-{name:"เค้ก 🍰",color:"red"},
-{name:"ลูกอม 🍬",color:"red"},
-{name:"น้ำอัดลม 🥤",color:"red"},
-{name:"เฟรนช์ฟราย 🍟",color:"red"},
-{name:"เบอร์เกอร์ 🍔",color:"red"}
-
-]
-
-let current
-let score=0
-
-function nextFood(){
-current=foods[Math.floor(Math.random()*foods.length)]
-document.getElementById("food").innerText=current.name
+function newFood(){
+current=foods[Math.floor(Math.random()*foods.length)];
+document.getElementById("food").innerText=current.name;
 }
 
-function choose(color){
-if(color===current.color){
-score++
-document.getElementById("score").innerText=score
+function answer(type){
+if(type==current.type){
+score++;
+document.getElementById("score").innerText="คะแนน: "+score;
 }
-nextFood()
+newFood();
 }
 
-document.getElementById("green").onclick=()=>choose("green")
-document.getElementById("yellow").onclick=()=>choose("yellow")
-document.getElementById("red").onclick=()=>choose("red")
+document.getElementById("g").onclick=()=>answer("green");
+document.getElementById("y").onclick=()=>answer("yellow");
+document.getElementById("r").onclick=()=>answer("red");
 
-nextFood()
-
-navigator.mediaDevices.getUserMedia({video:true})
-.then(stream=>{
-video.srcObject=stream
-})
-
-let time=60
+newFood();
 
 setInterval(()=>{
-time--
-timer.innerText=time
-
+time--;
+document.getElementById("timer").innerText="เวลา: "+time;
 if(time<=0){
-saveScore(score)
-alert("จบเกม คะแนน "+score)
-location.reload()
+alert("หมดเวลา คะแนน "+score);
+location.reload();
 }
+},1000);
 
-},1000)
-
-function saveScore(s){
-
-let scores=JSON.parse(localStorage.getItem("scores")||"[]")
-
-scores.push(s)
-
-scores.sort((a,b)=>b-a)
-
-scores=scores.slice(0,5)
-
-localStorage.setItem("scores",JSON.stringify(scores))
-
-showScores()
-
-}
-
-function showScores(){
-
-let scores=JSON.parse(localStorage.getItem("scores")||"[]")
-
-document.getElementById("leaderboard").innerHTML="Top Scores: "+scores.join(" , ")
-
-}
-
-showScores()
+const video=document.getElementById("video");
+const cursor=document.getElementById("cursor");
 
 const hands=new Hands({
-locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-})
+locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
 
 hands.setOptions({
 maxNumHands:1,
+modelComplexity:1,
 minDetectionConfidence:0.7,
 minTrackingConfidence:0.7
-})
+});
 
 hands.onResults(results=>{
-
-if(document.getElementById("mode").value!=="hand") return
-
 if(results.multiHandLandmarks.length>0){
 
-const x=results.multiHandLandmarks[0][8].x
+let p=results.multiHandLandmarks[0][8];
 
-if(x<0.33) choose("green")
-else if(x<0.66) choose("yellow")
-else choose("red")
+let x=(1-p.x)*window.innerWidth;
+let y=p.y*window.innerHeight;
+
+cursor.style.left=x+"px";
+cursor.style.top=y+"px";
+
+checkHover(x,y);
 
 }
-
-})
+});
 
 const camera=new Camera(video,{
-onFrame:async()=>{await hands.send({image:video})},
+onFrame:async()=>{
+await hands.send({image:video});
+},
 width:640,
 height:480
-})
+});
 
-camera.start()
+camera.start();
+
+function checkHover(x,y){
+
+let buttons=document.querySelectorAll("button");
+
+buttons.forEach(btn=>{
+let r=btn.getBoundingClientRect();
+
+if(
+x>r.left &&
+x<r.right &&
+y>r.top &&
+y<r.bottom
+){
+btn.click();
+}
+});
+
+}
 
 </script>
 
