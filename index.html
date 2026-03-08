@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>เกมอาหาร 3 สี</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
 
 body{
 margin:0;
-font-family:sans-serif;
-text-align:center;
-background:black;
-color:white;
 overflow:hidden;
+font-family:sans-serif;
+color:white;
+text-align:center;
 }
 
 video{
@@ -27,6 +27,49 @@ transform:scaleX(-1);
 z-index:-1;
 }
 
+#food{
+font-size:70px;
+margin-top:120px;
+}
+
+.score{
+position:absolute;
+top:20px;
+right:20px;
+font-size:28px;
+}
+
+.timer{
+position:absolute;
+top:20px;
+left:50%;
+transform:translateX(-50%);
+font-size:36px;
+background:black;
+padding:10px 20px;
+border-radius:20px;
+}
+
+.choice{
+position:absolute;
+width:260px;
+height:260px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:80px;
+color:white;
+}
+
+.left{left:5%;top:50%;transform:translateY(-50%)}
+.center{left:50%;top:65%;transform:translateX(-50%)}
+.right{right:5%;top:50%;transform:translateY(-50%)}
+
+.green{background:#2ecc71}
+.yellow{background:#f1c40f;color:black}
+.red{background:#e74c3c}
+
 #mode{
 position:absolute;
 top:20px;
@@ -34,37 +77,15 @@ left:20px;
 z-index:2;
 }
 
-#food{
-font-size:80px;
-margin-top:120px;
-}
-
-.buttons{
+#leaderboard{
 position:absolute;
-bottom:60px;
-width:100%;
-display:flex;
-justify-content:center;
-gap:40px;
-}
-
-button{
-font-size:40px;
-padding:30px 60px;
-border:none;
-border-radius:20px;
-color:white;
-}
-
-.green{background:#2ecc71}
-.yellow{background:#f1c40f;color:black}
-.red{background:#e74c3c}
-
-#score{
-position:absolute;
-top:20px;
-right:20px;
-font-size:30px;
+bottom:10px;
+left:50%;
+transform:translateX(-50%);
+background:rgba(0,0,0,0.6);
+padding:10px 20px;
+border-radius:10px;
+font-size:18px;
 }
 
 </style>
@@ -74,22 +95,25 @@ font-size:30px;
 
 <select id="mode">
 <option value="click">โหมดคลิก</option>
-<option value="camera">โหมดกล้อง</option>
+<option value="hand">โหมดมือ</option>
 </select>
 
-<video id="camera" autoplay playsinline></video>
+<video id="video" autoplay playsinline></video>
 
-<div id="score">คะแนน: 0</div>
+<div class="timer" id="timer">60</div>
+<div class="score">คะแนน: <span id="score">0</span></div>
 
 <div id="food"></div>
 
-<div class="buttons">
+<div id="green" class="choice green left">เขียว</div>
+<div id="yellow" class="choice yellow center">เหลือง</div>
+<div id="red" class="choice red right">แดง</div>
 
-<button class="green" onclick="choose('green')">เขียว</button>
-<button class="yellow" onclick="choose('yellow')">เหลือง</button>
-<button class="red" onclick="choose('red')">แดง</button>
+<div id="leaderboard"></div>
 
-</div>
+<audio id="correctSound">
+<source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg">
+</audio>
 
 <script>
 
@@ -125,7 +149,7 @@ function nextFood(){
 
 current=foods[Math.floor(Math.random()*foods.length)]
 
-document.getElementById("food").innerText=current.name
+food.innerText=current.name
 
 }
 
@@ -134,7 +158,8 @@ function choose(color){
 if(color===current.color){
 
 score++
-document.getElementById("score").innerText="คะแนน: "+score
+scoreEl.innerText=score
+correctSound.play()
 
 }
 
@@ -142,26 +167,99 @@ nextFood()
 
 }
 
+const scoreEl=document.getElementById("score")
+
+green.onclick=()=>choose("green")
+yellow.onclick=()=>choose("yellow")
+red.onclick=()=>choose("red")
+
 nextFood()
 
-// camera mode
+// camera
 
 navigator.mediaDevices.getUserMedia({video:true})
 .then(stream=>{
-camera.srcObject=stream
+video.srcObject=stream
 })
 
-document.addEventListener("keydown",(e)=>{
+// timer
 
-if(mode.value==="camera"){
+let time=60
 
-if(e.key==="ArrowLeft") choose("green")
-if(e.key==="ArrowUp") choose("yellow")
-if(e.key==="ArrowRight") choose("red")
+setInterval(()=>{
+
+time--
+timer.innerText=time
+
+if(time<=0){
+
+saveScore(score)
+alert("จบเกม คะแนน "+score)
+location.reload()
+
+}
+
+},1000)
+
+// leaderboard
+
+function saveScore(s){
+
+let scores=JSON.parse(localStorage.getItem("scores")||"[]")
+scores.push(s)
+scores.sort((a,b)=>b-a)
+scores=scores.slice(0,5)
+
+localStorage.setItem("scores",JSON.stringify(scores))
+showScores()
+
+}
+
+function showScores(){
+
+let scores=JSON.parse(localStorage.getItem("scores")||"[]")
+
+leaderboard.innerHTML="Top Scores: "+scores.join(" , ")
+
+}
+
+showScores()
+
+// hand tracking
+
+const hands=new Hands({
+locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+})
+
+hands.setOptions({
+maxNumHands:1,
+minDetectionConfidence:0.7,
+minTrackingConfidence:0.7
+})
+
+hands.onResults(results=>{
+
+if(mode.value!=="hand") return
+
+if(results.multiHandLandmarks.length>0){
+
+const x=results.multiHandLandmarks[0][8].x
+
+if(x<0.33) choose("green")
+else if(x<0.66) choose("yellow")
+else choose("red")
 
 }
 
 })
+
+const camera=new Camera(video,{
+onFrame:async()=>{await hands.send({image:video})},
+width:640,
+height:480
+})
+
+camera.start()
 
 </script>
 
