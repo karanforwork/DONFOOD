@@ -12,10 +12,9 @@
 body{
 margin:0;
 font-family:sans-serif;
-color:white;
 text-align:center;
+color:white;
 overflow:hidden;
-background:#8B0000;
 }
 
 /* กล้องเต็มจอ */
@@ -29,7 +28,7 @@ height:100vh;
 object-fit:cover;
 transform:scaleX(-1);
 z-index:-2;
-opacity:0.25;
+opacity:0.35;
 }
 
 /* พื้นหลังตรุษจีน */
@@ -40,30 +39,19 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(120,0,0,0.35);
+background:rgba(120,0,0,0.25);
 z-index:-1;
-}
-
-/* confetti */
-
-.confetti{
-position:fixed;
-width:100%;
-height:100%;
-pointer-events:none;
-background-image:url("https://i.imgur.com/6RMhx.gif");
-opacity:0.4;
 }
 
 /* UI */
 
 h1{
-font-size:48px;
+font-size:50px;
 margin-top:10px;
 }
 
 #lion{
-font-size:80px;
+font-size:90px;
 }
 
 #timer,#score{
@@ -71,7 +59,7 @@ font-size:28px;
 }
 
 #food{
-font-size:42px;
+font-size:46px;
 margin-top:20px;
 }
 
@@ -79,13 +67,13 @@ margin-top:20px;
 
 .buttons{
 position:absolute;
-bottom:80px;
+bottom:70px;
 width:100%;
 }
 
 button{
 font-size:36px;
-padding:28px;
+padding:30px;
 margin:20px;
 border:none;
 border-radius:16px;
@@ -114,8 +102,8 @@ pointer-events:none;
 
 <body>
 
+<video id="video" autoplay></video>
 <div class="overlay"></div>
-<div class="confetti"></div>
 
 <h1>🦁 Lion Dance Food Game</h1>
 
@@ -123,9 +111,6 @@ pointer-events:none;
 
 <div id="timer">เวลา: 60</div>
 <div id="score">คะแนน: 0</div>
-
-<video id="video" autoplay></video>
-<div id="cursor"></div>
 
 <div id="food"></div>
 
@@ -137,6 +122,8 @@ pointer-events:none;
 
 </div>
 
+<div id="cursor"></div>
+
 <audio id="drum" src="https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3"></audio>
 
 <script>
@@ -146,8 +133,8 @@ pointer-events:none;
 const foods=[
 
 {name:"🥦 บรอกโคลี",type:"green"},
-{name:"🥒 แตงกวา",type:"green"},
 {name:"🥬 ผักกาด",type:"green"},
+{name:"🥒 แตงกวา",type:"green"},
 {name:"🥕 แครอท",type:"green"},
 {name:"🥗 สลัด",type:"green"},
 
@@ -188,6 +175,7 @@ if(type===current.type){
 
 score++
 scoreDiv.innerText="คะแนน: "+score
+
 lion.innerText="🦁😋"
 drum.play()
 
@@ -223,7 +211,6 @@ timer.innerText="เวลา: "+time
 if(time<=0){
 
 alert("หมดเวลา คะแนน "+score)
-
 location.reload()
 
 }
@@ -264,17 +251,13 @@ b.click()
 }
 
 const hands=new Hands({
-
 locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-
 })
 
 hands.setOptions({
-
 maxNumHands:1,
 minDetectionConfidence:0.7,
 minTrackingConfidence:0.7
-
 })
 
 hands.onResults(results=>{
@@ -297,26 +280,17 @@ checkHover()
 const video=document.getElementById("video")
 
 const camera=new Camera(video,{
-
 onFrame:async()=>{
-
 await hands.send({image:video})
-
 },
-
 width:640,
 height:480
-
 })
 
 camera.start()
 
-/* fullscreen */
-
 document.body.onclick=()=>{
-
 document.documentElement.requestFullscreen()
-
 }
 
 </script>
