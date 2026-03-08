@@ -1,57 +1,70 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+
 <meta charset="UTF-8">
-<title>Healthy Food Lion Game PRO</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<title>Healthy Food Lion Game</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
 
-body{
+html,body{
 margin:0;
+padding:0;
+width:100%;
+height:100%;
 overflow:hidden;
 font-family:sans-serif;
-text-align:center;
-background:#000;
+background:black;
 color:white;
 }
 
 video{
-position:absolute;
-width:100%;
-height:100%;
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
 object-fit:cover;
 transform:scaleX(-1);
+z-index:-1;
 }
 
 #cursor{
 position:absolute;
-width:50px;
-height:50px;
+width:60px;
+height:60px;
 background:#00ff88;
-border-radius:50%;
 border:5px solid white;
-transform:translate(-25px,-25px);
+border-radius:50%;
+transform:translate(-30px,-30px);
 pointer-events:none;
-z-index:999;
 }
 
-#topUI{
+#score{
 position:absolute;
-top:10px;
-width:100%;
-display:flex;
-justify-content:space-between;
-padding:20px;
-font-size:30px;
+left:20px;
+top:20px;
+font-size:32px;
+}
+
+#timer{
+position:absolute;
+right:20px;
+top:20px;
+font-size:32px;
 }
 
 #lion{
 position:absolute;
 top:90px;
 width:100%;
+text-align:center;
 font-size:80px;
 }
 
@@ -59,7 +72,8 @@ font-size:80px;
 position:absolute;
 top:170px;
 width:100%;
-font-size:110px;
+text-align:center;
+font-size:120px;
 }
 
 .buttons{
@@ -71,27 +85,26 @@ justify-content:space-around;
 }
 
 button{
-width:320px;
+width:300px;
 height:140px;
-font-size:32px;
 border:none;
 border-radius:30px;
-color:white;
+font-size:34px;
 font-weight:bold;
+color:white;
 }
 
-.green{background:#2ecc71;}
-.yellow{background:#f1c40f;}
-.red{background:#e74c3c;}
+.green{background:#2ecc71}
+.yellow{background:#f1c40f}
+.red{background:#e74c3c}
 
-#leaderboard{
+#leader{
 position:absolute;
 right:20px;
 top:120px;
 background:rgba(0,0,0,0.5);
 padding:15px;
 border-radius:15px;
-font-size:18px;
 }
 
 </style>
@@ -100,41 +113,31 @@ font-size:18px;
 <body>
 
 <video id="video" autoplay playsinline></video>
+
 <div id="cursor"></div>
 
-<div id="topUI">
-<div>⭐ Score <span id="score">0</span></div>
-<div>⏱ <span id="time">60</span></div>
-</div>
+<div id="score">⭐ 0</div>
+<div id="timer">⏱ 60</div>
 
 <div id="lion">🦁</div>
 <div id="food">🍎</div>
 
 <div class="buttons">
 
-<button id="btnGreen" class="green">🟢 กินบ่อย</button>
-<button id="btnYellow" class="yellow">🟡 กินพอดี</button>
-<button id="btnRed" class="red">🔴 กินแต่น้อย</button>
+<button id="green" class="green">🟢 กินบ่อย</button>
+<button id="yellow" class="yellow">🟡 กินพอดี</button>
+<button id="red" class="red">🔴 กินแต่น้อย</button>
 
 </div>
 
-<div id="leaderboard">
+<div id="leader">
 🏆 Leaderboard
 <div id="board"></div>
 </div>
 
-<audio id="correct">
-<source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg">
-</audio>
-
-<audio id="wrong">
-<source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg">
-</audio>
-
 <script>
 
 const foods=[
-
 {emoji:"🥦",type:"green"},
 {emoji:"🍎",type:"green"},
 {emoji:"🥕",type:"green"},
@@ -146,22 +149,20 @@ const foods=[
 {emoji:"🍟",type:"red"},
 {emoji:"🍔",type:"red"},
 {emoji:"🍩",type:"red"}
+]
 
-];
+let score=0
+let time=60
+let current
 
-let current;
-let score=0;
-let time=60;
-
-const foodEl=document.getElementById("food");
-const scoreEl=document.getElementById("score");
-const timeEl=document.getElementById("time");
-const lion=document.getElementById("lion");
+const foodEl=document.getElementById("food")
+const lion=document.getElementById("lion")
 
 function newFood(){
 
-current=foods[Math.floor(Math.random()*foods.length)];
-foodEl.innerText=current.emoji;
+current=foods[Math.floor(Math.random()*foods.length)]
+
+foodEl.innerText=current.emoji
 
 }
 
@@ -169,149 +170,187 @@ function answer(type){
 
 if(type===current.type){
 
-score++;
-scoreEl.innerText=score;
+score++
 
-lion.innerText="🦁😋";
+document.getElementById("score").innerText="⭐ "+score
 
-document.getElementById("correct").play();
+lion.innerText="🦁😋"
 
 setTimeout(()=>{
-lion.innerText="🦁";
-},500);
 
-}else{
+lion.innerText="🦁"
 
-document.getElementById("wrong").play();
+},500)
 
 }
 
-newFood();
+newFood()
 
 }
 
-newFood();
+newFood()
 
 setInterval(()=>{
 
-time--;
-timeEl.innerText=time;
+time--
+
+document.getElementById("timer").innerText="⏱ "+time
 
 if(time<=0){
 
-saveScore();
-alert("หมดเวลา คะแนน "+score);
-location.reload();
+saveScore()
+
+alert("หมดเวลา คะแนน "+score)
+
+location.reload()
 
 }
 
-},1000);
+},1000)
 
 function saveScore(){
 
-let scores=JSON.parse(localStorage.getItem("scores")||"[]");
-scores.push(score);
-scores.sort((a,b)=>b-a);
-scores=scores.slice(0,5);
+let scores=JSON.parse(localStorage.getItem("scores")||"[]")
 
-localStorage.setItem("scores",JSON.stringify(scores));
+scores.push(score)
 
-showBoard();
+scores.sort((a,b)=>b-a)
+
+scores=scores.slice(0,5)
+
+localStorage.setItem("scores",JSON.stringify(scores))
+
+showBoard()
 
 }
 
 function showBoard(){
 
-let scores=JSON.parse(localStorage.getItem("scores")||"[]");
+let scores=JSON.parse(localStorage.getItem("scores")||"[]")
 
-let html="";
+let html=""
 
 scores.forEach(s=>{
-html+="<div>"+s+"</div>";
-});
 
-document.getElementById("board").innerHTML=html;
+html+="<div>"+s+"</div>"
+
+})
+
+document.getElementById("board").innerHTML=html
 
 }
 
-showBoard();
+showBoard()
 
-const video=document.getElementById("video");
+const video=document.getElementById("video")
 
 navigator.mediaDevices.getUserMedia({video:true})
+
 .then(stream=>{
-video.srcObject=stream;
-});
+
+video.srcObject=stream
+
+})
 
 const hands=new Hands({
-locateFile:(file)=>{
-return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+
+locateFile:file=>{
+
+return https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}
+
 }
-});
+
+})
 
 hands.setOptions({
-maxNumHands:1,
-minDetectionConfidence:0.7,
-minTrackingConfidence:0.7
-});
 
-let cooldown=false;
+maxNumHands:1,
+
+minDetectionConfidence:0.7,
+
+minTrackingConfidence:0.7
+
+})
+
+let holdTime=0
+
+let lastBtn=null
 
 hands.onResults(results=>{
 
-if(!results.multiHandLandmarks)return;
+if(!results.multiHandLandmarks) return
 
-const hand=results.multiHandLandmarks[0];
-const palm=hand[9];
+const hand=results.multiHandLandmarks[0]
 
-let x=(1-palm.x)*window.innerWidth;
-let y=palm.y*window.innerHeight;
+const palm=hand[9]
 
-const cursor=document.getElementById("cursor");
-cursor.style.left=x+"px";
-cursor.style.top=y+"px";
+let x=(1-palm.x)*window.innerWidth
 
-if(cooldown)return;
+let y=palm.y*window.innerHeight
 
-checkButton(x,y);
+const cursor=document.getElementById("cursor")
 
-});
+cursor.style.left=x+"px"
+
+cursor.style.top=y+"px"
+
+checkButton(x,y)
+
+})
 
 function checkButton(x,y){
 
-const g=document.getElementById("btnGreen").getBoundingClientRect();
-const yb=document.getElementById("btnYellow").getBoundingClientRect();
-const r=document.getElementById("btnRed").getBoundingClientRect();
+let btn=null
 
-if(x>g.left && x<g.right && y>g.top && y<g.bottom){
-cooldown=true;
-answer("green");
-setTimeout(()=>cooldown=false,700);
+const g=document.getElementById("green").getBoundingClientRect()
+
+const yb=document.getElementById("yellow").getBoundingClientRect()
+
+const r=document.getElementById("red").getBoundingClientRect()
+
+if(x>g.left && x<g.right && y>g.top && y<g.bottom) btn="green"
+
+if(x>yb.left && x<yb.right && y>yb.top && y<yb.bottom) btn="yellow"
+
+if(x>r.left && x<r.right && y>r.top && y<r.bottom) btn="red"
+
+if(btn===lastBtn){
+
+holdTime++
+
+if(holdTime>25){
+
+answer(btn)
+
+holdTime=0
+
 }
 
-if(x>yb.left && x<yb.right && y>yb.top && y<yb.bottom){
-cooldown=true;
-answer("yellow");
-setTimeout(()=>cooldown=false,700);
-}
+}else{
 
-if(x>r.left && x<r.right && y>r.top && y<r.bottom){
-cooldown=true;
-answer("red");
-setTimeout(()=>cooldown=false,700);
+holdTime=0
+
+lastBtn=btn
+
 }
 
 }
 
 const camera=new Camera(video,{
-onFrame:async()=>{
-await hands.send({image:video});
-},
-width:640,
-height:480
-});
 
-camera.start();
+onFrame:async()=>{
+
+await hands.send({image:video})
+
+},
+
+width:640,
+
+height:480
+
+})
+
+camera.start()
 
 </script>
 
