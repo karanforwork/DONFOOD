@@ -10,14 +10,39 @@
 <style>
 
 body{
+margin:0;
 font-family:sans-serif;
 text-align:center;
-margin:0;
+background:#000;
+color:white;
 overflow:hidden;
 }
 
-/* กล้องเต็มจอ */
+h1{
+position:absolute;
+top:10px;
+width:100%;
+font-size:40px;
+z-index:2;
+}
 
+#timer{
+position:absolute;
+top:70px;
+left:20px;
+font-size:30px;
+z-index:2;
+}
+
+#score{
+position:absolute;
+top:70px;
+right:20px;
+font-size:30px;
+z-index:2;
+}
+
+/* กล้องเต็มจอ */
 #video{
 position:fixed;
 top:0;
@@ -26,32 +51,30 @@ width:100vw;
 height:100vh;
 object-fit:cover;
 transform:scaleX(-1);
-z-index:-1;
 }
 
-/* ตัวชี้มือ */
-
+/* เคอร์เซอร์มือ */
 #cursor{
-position:absolute;
+position:fixed;
 width:40px;
 height:40px;
 background:red;
 border-radius:50%;
 pointer-events:none;
-z-index:10;
+z-index:3;
 }
 
-/* กล่องเกม */
-
+/* กล่องปุ่ม */
 .container{
 position:absolute;
-bottom:60px;
+bottom:30px;
 width:100%;
+z-index:2;
 }
 
 .food{
 font-size:40px;
-margin:10px;
+margin-bottom:15px;
 }
 
 button{
@@ -67,33 +90,17 @@ width:260px;
 .yellow{background:#FFC107}
 .red{background:#F44336;color:white}
 
-#score{
-font-size:30px;
-}
-
-#timer{
-font-size:28px;
-}
-
-.topUI{
-position:absolute;
-top:10px;
-width:100%;
-}
-
 </style>
 </head>
 
 <body>
 
-<video id="video" autoplay></video>
-<div id="cursor"></div>
-
-<div class="topUI">
 <h1>🍎 เกมอาหาร 3 สี</h1>
 <div id="timer">เวลา: 60</div>
 <div id="score">คะแนน: 0</div>
-</div>
+
+<video id="video" autoplay playsinline></video>
+<div id="cursor"></div>
 
 <div class="container">
 <div id="food" class="food"></div>
@@ -228,7 +235,7 @@ hoverButton=found;
 hoverStart=Date.now();
 }
 
-if(Date.now()-hoverStart>600){
+if(Date.now()-hoverStart>700){
 found.click();
 hoverButton=null;
 }
