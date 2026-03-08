@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Healthy Food Lion Game</title>
+<title>Healthy Food Lion Game PRO</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -11,56 +11,55 @@
 
 body{
 margin:0;
+overflow:hidden;
 font-family:sans-serif;
 text-align:center;
-background:#222;
+background:#000;
 color:white;
-overflow:hidden;
 }
 
 video{
 position:absolute;
-top:0;
-left:0;
 width:100%;
 height:100%;
 object-fit:cover;
 transform:scaleX(-1);
 }
 
-#ui{
+#cursor{
 position:absolute;
-top:0;
-width:100%;
+width:50px;
+height:50px;
+background:#00ff88;
+border-radius:50%;
+border:5px solid white;
+transform:translate(-25px,-25px);
+pointer-events:none;
+z-index:999;
 }
 
-h1{
-font-size:40px;
-margin-top:20px;
+#topUI{
+position:absolute;
+top:10px;
+width:100%;
+display:flex;
+justify-content:space-between;
+padding:20px;
+font-size:30px;
 }
 
 #lion{
+position:absolute;
+top:90px;
+width:100%;
 font-size:80px;
-margin-top:10px;
 }
 
 #food{
-font-size:90px;
-margin-top:10px;
-}
-
-#score{
 position:absolute;
-left:20px;
-top:20px;
-font-size:30px;
-}
-
-#timer{
-position:absolute;
-right:20px;
-top:20px;
-font-size:30px;
+top:170px;
+width:100%;
+font-size:110px;
 }
 
 .buttons{
@@ -72,21 +71,27 @@ justify-content:space-around;
 }
 
 button{
-width:280px;
-height:120px;
-font-size:30px;
-border-radius:30px;
+width:320px;
+height:140px;
+font-size:32px;
 border:none;
+border-radius:30px;
 color:white;
 font-weight:bold;
 }
 
-#left{
-background:#e53935;
-}
+.green{background:#2ecc71;}
+.yellow{background:#f1c40f;}
+.red{background:#e74c3c;}
 
-#right{
-background:#43a047;
+#leaderboard{
+position:absolute;
+right:20px;
+top:120px;
+background:rgba(0,0,0,0.5);
+padding:15px;
+border-radius:15px;
+font-size:18px;
 }
 
 </style>
@@ -95,24 +100,27 @@ background:#43a047;
 <body>
 
 <video id="video" autoplay playsinline></video>
+<div id="cursor"></div>
 
-<div id="ui">
-
-<div id="score">⭐ Score 0</div>
-<div id="timer">⏱ 60</div>
-
-<h1>🦁 Healthy Food Game</h1>
+<div id="topUI">
+<div>⭐ Score <span id="score">0</span></div>
+<div>⏱ <span id="time">60</span></div>
+</div>
 
 <div id="lion">🦁</div>
 <div id="food">🍎</div>
 
-</div>
-
 <div class="buttons">
 
-<button id="left">🔴 กินแต่น้อย</button>
-<button id="right">🟢 กินบ่อย</button>
+<button id="btnGreen" class="green">🟢 กินบ่อย</button>
+<button id="btnYellow" class="yellow">🟡 กินพอดี</button>
+<button id="btnRed" class="red">🔴 กินแต่น้อย</button>
 
+</div>
+
+<div id="leaderboard">
+🏆 Leaderboard
+<div id="board"></div>
 </div>
 
 <audio id="correct">
@@ -125,17 +133,19 @@ background:#43a047;
 
 <script>
 
-const foods = [
+const foods=[
 
-{emoji:"🍎",type:"good"},
-{emoji:"🥦",type:"good"},
-{emoji:"🥕",type:"good"},
-{emoji:"🍌",type:"good"},
+{emoji:"🥦",type:"green"},
+{emoji:"🍎",type:"green"},
+{emoji:"🥕",type:"green"},
 
-{emoji:"🍔",type:"bad"},
-{emoji:"🍟",type:"bad"},
-{emoji:"🍕",type:"bad"},
-{emoji:"🍩",type:"bad"}
+{emoji:"🍚",type:"yellow"},
+{emoji:"🍜",type:"yellow"},
+{emoji:"🥪",type:"yellow"},
+
+{emoji:"🍟",type:"red"},
+{emoji:"🍔",type:"red"},
+{emoji:"🍩",type:"red"}
 
 ];
 
@@ -143,47 +153,40 @@ let current;
 let score=0;
 let time=60;
 
-const foodDiv=document.getElementById("food");
-const scoreDiv=document.getElementById("score");
-const timerDiv=document.getElementById("timer");
+const foodEl=document.getElementById("food");
+const scoreEl=document.getElementById("score");
+const timeEl=document.getElementById("time");
+const lion=document.getElementById("lion");
 
 function newFood(){
 
 current=foods[Math.floor(Math.random()*foods.length)];
-foodDiv.innerText=current.emoji;
+foodEl.innerText=current.emoji;
 
 }
 
 function answer(type){
 
-if(current.type==="good" && type==="right"){
-correct();
-}
-
-else if(current.type==="bad" && type==="left"){
-correct();
-}
-
-else{
-wrong();
-}
-
-newFood();
-
-}
-
-function correct(){
+if(type===current.type){
 
 score++;
-scoreDiv.innerText="⭐ Score "+score;
+scoreEl.innerText=score;
+
+lion.innerText="🦁😋";
 
 document.getElementById("correct").play();
 
-}
+setTimeout(()=>{
+lion.innerText="🦁";
+},500);
 
-function wrong(){
+}else{
 
 document.getElementById("wrong").play();
+
+}
+
+newFood();
 
 }
 
@@ -192,25 +195,56 @@ newFood();
 setInterval(()=>{
 
 time--;
-timerDiv.innerText="⏱ "+time;
+timeEl.innerText=time;
 
 if(time<=0){
 
-alert("หมดเวลา คะแนน = "+score);
+saveScore();
+alert("หมดเวลา คะแนน "+score);
 location.reload();
 
 }
 
 },1000);
 
+function saveScore(){
+
+let scores=JSON.parse(localStorage.getItem("scores")||"[]");
+scores.push(score);
+scores.sort((a,b)=>b-a);
+scores=scores.slice(0,5);
+
+localStorage.setItem("scores",JSON.stringify(scores));
+
+showBoard();
+
+}
+
+function showBoard(){
+
+let scores=JSON.parse(localStorage.getItem("scores")||"[]");
+
+let html="";
+
+scores.forEach(s=>{
+html+="<div>"+s+"</div>";
+});
+
+document.getElementById("board").innerHTML=html;
+
+}
+
+showBoard();
+
 const video=document.getElementById("video");
 
-navigator.mediaDevices.getUserMedia({video:true}).then(stream=>{
+navigator.mediaDevices.getUserMedia({video:true})
+.then(stream=>{
 video.srcObject=stream;
 });
 
-const hands = new Hands({
-locateFile: file => {
+const hands=new Hands({
+locateFile:(file)=>{
 return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
 }
 });
@@ -228,49 +262,49 @@ hands.onResults(results=>{
 if(!results.multiHandLandmarks)return;
 
 const hand=results.multiHandLandmarks[0];
-
 const palm=hand[9];
 
-let x=palm.x*window.innerWidth;
+let x=(1-palm.x)*window.innerWidth;
 let y=palm.y*window.innerHeight;
 
-const leftBtn=document.getElementById("left").getBoundingClientRect();
-const rightBtn=document.getElementById("right").getBoundingClientRect();
+const cursor=document.getElementById("cursor");
+cursor.style.left=x+"px";
+cursor.style.top=y+"px";
 
-if(!cooldown){
+if(cooldown)return;
 
-if(
-x>leftBtn.left &&
-x<leftBtn.right &&
-y>leftBtn.top &&
-y<leftBtn.bottom
-){
-
-cooldown=true;
-answer("left");
-setTimeout(()=>cooldown=false,800);
-
-}
-
-if(
-x>rightBtn.left &&
-x<rightBtn.right &&
-y>rightBtn.top &&
-y<rightBtn.bottom
-){
-
-cooldown=true;
-answer("right");
-setTimeout(()=>cooldown=false,800);
-
-}
-
-}
+checkButton(x,y);
 
 });
 
-const camera = new Camera(video,{
-onFrame: async ()=>{
+function checkButton(x,y){
+
+const g=document.getElementById("btnGreen").getBoundingClientRect();
+const yb=document.getElementById("btnYellow").getBoundingClientRect();
+const r=document.getElementById("btnRed").getBoundingClientRect();
+
+if(x>g.left && x<g.right && y>g.top && y<g.bottom){
+cooldown=true;
+answer("green");
+setTimeout(()=>cooldown=false,700);
+}
+
+if(x>yb.left && x<yb.right && y>yb.top && y<yb.bottom){
+cooldown=true;
+answer("yellow");
+setTimeout(()=>cooldown=false,700);
+}
+
+if(x>r.left && x<r.right && y>r.top && y<r.bottom){
+cooldown=true;
+answer("red");
+setTimeout(()=>cooldown=false,700);
+}
+
+}
+
+const camera=new Camera(video,{
+onFrame:async()=>{
 await hands.send({image:video});
 },
 width:640,
