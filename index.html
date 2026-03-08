@@ -11,10 +11,11 @@
 
 body{
 margin:0;
-overflow:hidden;
 font-family:sans-serif;
 text-align:center;
+background:black;
 color:white;
+overflow:hidden;
 }
 
 video{
@@ -26,75 +27,69 @@ transform:scaleX(-1);
 z-index:-1;
 }
 
-.food{
+#mode{
 position:absolute;
-top:20%;
-width:100%;
+top:20px;
+left:20px;
+z-index:2;
+}
+
+#food{
 font-size:80px;
-font-weight:bold;
+margin-top:120px;
 }
 
-.score{
+.buttons{
 position:absolute;
-top:20px;
-right:30px;
-font-size:30px;
-}
-
-.timer{
-position:absolute;
-top:20px;
-left:50%;
-transform:translateX(-50%);
-font-size:40px;
-background:black;
-padding:10px 20px;
-border-radius:20px;
-}
-
-.choice{
-position:absolute;
-width:280px;
-height:280px;
-border-radius:50%;
+bottom:60px;
+width:100%;
 display:flex;
-align-items:center;
 justify-content:center;
-font-size:120px;
+gap:40px;
+}
+
+button{
+font-size:40px;
+padding:30px 60px;
+border:none;
+border-radius:20px;
 color:white;
 }
 
-.left{
-left:5%;
-top:50%;
-transform:translateY(-50%);
-}
-
-.right{
-right:5%;
-top:50%;
-transform:translateY(-50%);
-}
-
-.green{background:#27ae60}
+.green{background:#2ecc71}
 .yellow{background:#f1c40f;color:black}
 .red{background:#e74c3c}
+
+#score{
+position:absolute;
+top:20px;
+right:20px;
+font-size:30px;
+}
 
 </style>
 </head>
 
 <body>
 
-<video id="video" autoplay playsinline></video>
+<select id="mode">
+<option value="click">โหมดคลิก</option>
+<option value="camera">โหมดกล้อง</option>
+</select>
 
-<div class="timer" id="timer">60</div>
+<video id="camera" autoplay playsinline></video>
 
-<div class="score">คะแนน: <span id="score">0</span></div>
+<div id="score">คะแนน: 0</div>
 
-<div class="food" id="food">แอปเปิล</div>
+<div id="food"></div>
 
-<div id="left" class="choice"></div>
-<div id="right" class="choice"></div>
+<div class="buttons">
+
+<button class="green" onclick="choose('green')">เขียว</button>
+<button class="yellow" onclick="choose('yellow')">เหลือง</button>
+<button class="red" onclick="choose('red')">แดง</button>
+
+</div>
 
 <script>
 
@@ -126,87 +121,47 @@ const foods=[
 let current
 let score=0
 
-function randomColor(){
-
-const colors=["green","yellow","red"]
-return colors[Math.floor(Math.random()*3)]
-
-}
-
-function next(){
+function nextFood(){
 
 current=foods[Math.floor(Math.random()*foods.length)]
 
 document.getElementById("food").innerText=current.name
 
-let correct=current.color
-let wrong=randomColor()
-
-while(wrong===correct){
-wrong=randomColor()
 }
 
-if(Math.random()>0.5){
+function choose(color){
 
-setChoice(left,correct,true)
-setChoice(right,wrong,false)
-
-}else{
-
-setChoice(left,wrong,false)
-setChoice(right,correct,true)
-
-}
-
-}
-
-function setChoice(btn,color,isCorrect){
-
-btn.className="choice "+btn.classList.contains("left")?"left":"right"
-btn.classList.add(color)
-
-btn.dataset.correct=isCorrect
-
-}
-
-left.onclick=()=>choose(left)
-right.onclick=()=>choose(right)
-
-function choose(btn){
-
-if(btn.dataset.correct==="true"){
+if(color===current.color){
 
 score++
-document.getElementById("score").innerText=score
+document.getElementById("score").innerText="คะแนน: "+score
 
 }
 
-next()
+nextFood()
 
 }
 
-next()
+nextFood()
+
+// camera mode
 
 navigator.mediaDevices.getUserMedia({video:true})
 .then(stream=>{
-video.srcObject=stream
+camera.srcObject=stream
 })
 
-let time=60
+document.addEventListener("keydown",(e)=>{
 
-setInterval(()=>{
+if(mode.value==="camera"){
 
-time--
-timer.innerText=time
-
-if(time<=0){
-
-alert("จบเกม! คะแนน "+score)
-location.reload()
+if(e.key==="ArrowLeft") choose("green")
+if(e.key==="ArrowUp") choose("yellow")
+if(e.key==="ArrowRight") choose("red")
 
 }
 
-},1000)
+})
 
 </script>
 
