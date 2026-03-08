@@ -1,100 +1,71 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>🦁 Lion Healthy Food Game</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<title>🦁 Healthy Food Game</title>
 
 <style>
 
 body{
-margin:0;
-overflow:hidden;
-font-family:sans-serif;
-background:linear-gradient(#8b0000,#3b0000);
+font-family: Arial;
+background:#1e293b;
 color:white;
+text-align:center;
+margin:0;
 }
 
-video,canvas{
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:100%;
-object-fit:cover;
-}
-
-#header{
-position:absolute;
-top:10px;
-width:100%;
-display:flex;
-justify-content:space-between;
-padding:0 30px;
-font-size:32px;
+header{
+background:#0f172a;
+padding:15px;
+font-size:28px;
 font-weight:bold;
-text-shadow:0 0 10px black;
+}
+
+#game{
+margin-top:30px;
+}
+
+#lion{
+font-size:70px;
+transition:0.3s;
 }
 
 #food{
-position:absolute;
-top:38%;
-left:50%;
-transform:translate(-50%,-50%);
 font-size:120px;
-text-shadow:0 0 20px black;
+margin:20px;
 }
 
 #choices{
-position:absolute;
-bottom:80px;
-width:100%;
 display:flex;
-justify-content:space-around;
+justify-content:center;
+gap:40px;
+margin-top:20px;
 }
 
 .choice{
-width:40%;
-padding:30px;
-font-size:42px;
-border-radius:25px;
-text-align:center;
-box-shadow:0 0 20px black;
-}
-
-.left{
-background:#27ae60;
-}
-
-.right{
-background:#e74c3c;
-}
-
-.sensor{
-position:absolute;
-bottom:210px;
-width:180px;
-height:180px;
-border-radius:50%;
-border:6px solid yellow;
-box-shadow:0 0 20px yellow;
-}
-
-#sensorL{ left:10%; }
-#sensorR{ right:10%; }
-
-#start{
-position:absolute;
-top:45%;
-left:50%;
-transform:translate(-50%,-50%);
-font-size:40px;
-padding:20px 50px;
-border-radius:20px;
+padding:20px 40px;
+font-size:24px;
+border-radius:12px;
+cursor:pointer;
 border:none;
-background:gold;
+}
+
+.green{background:#22c55e}
+.yellow{background:#eab308}
+.red{background:#ef4444}
+
+#scoreboard{
+margin-top:20px;
+font-size:20px;
+}
+
+#timer{
+font-size:24px;
+margin-top:10px;
+}
+
+#leaderboard{
+margin-top:20px;
 }
 
 </style>
@@ -102,183 +73,144 @@ background:gold;
 
 <body>
 
-<video id="video" autoplay playsinline></video>
-<canvas id="canvas"></canvas>
+<header>🦁 Healthy Food Game</header>
 
-<div id="header">
-<div id="time">⏱ 60</div>
-<div>🦁 Lion Food Game 🏮</div>
-<div id="score">Score:0</div>
+<div id="game">
+
+<div id="lion">🦁</div>
+
+<div id="food">🍎</div>
+
+<div id="choices"></div>
+
+<div id="timer">⏱ Time: 30</div>
+
+<div id="scoreboard">⭐ Score: 0</div>
+
+<div id="leaderboard">
+🏆 Best Score: <span id="best">0</span>
 </div>
 
-<div id="food">🍜</div>
-
-<div id="choices">
-<div class="choice left">กินได้บ่อย</div>
-<div class="choice right">กินแต่น้อย</div>
 </div>
 
-<div id="sensorL" class="sensor"></div>
-<div id="sensorR" class="sensor"></div>
-
-<button id="start" onclick="startGame()">🏮 เริ่มเกม</button>
-
-<audio id="bgm" loop>
-<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8b6c0a3a1c.mp3">
-</audio>
-
-<audio id="correct">
-<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_efc6c8c01f.mp3">
-</audio>
-
-<audio id="wrong">
-<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_2d1c44ccdb.mp3">
-</audio>
+<audio id="correct" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+<audio id="wrong" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"></audio>
 
 <script>
 
 const foods=[
-{name:"🥦",type:"green"},
-{name:"🥕",type:"green"},
-{name:"🍎",type:"green"},
-{name:"🍉",type:"green"},
-{name:"🥬",type:"green"},
-{name:"🍚",type:"yellow"},
-{name:"🍜",type:"yellow"},
-{name:"🍗",type:"yellow"},
-{name:"🥪",type:"yellow"},
-{name:"🍞",type:"yellow"},
-{name:"🍟",type:"red"},
-{name:"🍔",type:"red"},
-{name:"🍕",type:"red"},
-{name:"🍩",type:"red"},
-{name:"🍰",type:"red"},
-{name:"🍫",type:"red"},
-{name:"🍭",type:"red"},
-{name:"🍍",type:"green"},
-{name:"🥗",type:"green"},
-{name:"🍠",type:"yellow"}
+{emoji:"🍎",type:"green"},
+{emoji:"🥦",type:"green"},
+{emoji:"🍌",type:"green"},
+
+{emoji:"🍚",type:"yellow"},
+{emoji:"🍞",type:"yellow"},
+{emoji:"🥚",type:"yellow"},
+
+{emoji:"🍔",type:"red"},
+{emoji:"🍟",type:"red"},
+{emoji:"🍩",type:"red"}
 ]
 
 let score=0
-let time=60
-let current=null
-let cooldown=0
-let gameStarted=false
+let time=30
+let currentFood
 
-function newFood(){
-current=foods[Math.floor(Math.random()*foods.length)]
-document.getElementById("food").innerText=current.name
+const foodEl=document.getElementById("food")
+const choicesEl=document.getElementById("choices")
+const scoreEl=document.getElementById("scoreboard")
+const timerEl=document.getElementById("timer")
+const lion=document.getElementById("lion")
+const bestEl=document.getElementById("best")
+
+let best=localStorage.getItem("best")||0
+bestEl.textContent=best
+
+function newRound(){
+
+currentFood=foods[Math.floor(Math.random()*foods.length)]
+foodEl.textContent=currentFood.emoji
+
+choicesEl.innerHTML=""
+
+let types=["green","yellow","red"]
+types.sort(()=>0.5-Math.random())
+types=types.slice(0,2)
+
+types.forEach(type=>{
+
+let btn=document.createElement("button")
+
+btn.className="choice "+type
+
+if(type=="green")btn.textContent="🟢 กินได้บ่อย"
+if(type=="yellow")btn.textContent="🟡 กินพอดี"
+if(type=="red")btn.textContent="🔴 กินแต่น้อย"
+
+btn.onclick=()=>check(type)
+
+choicesEl.appendChild(btn)
+
+})
+
 }
 
-function startGame(){
+function check(choice){
 
-document.getElementById("start").style.display="none"
-document.getElementById("bgm").play()
+if(choice==currentFood.type){
 
-gameStarted=true
-newFood()
+score++
+scoreEl.textContent="⭐ Score: "+score
+
+document.getElementById("correct").play()
+
+lion.style.transform="scale(1.3)"
+
+setTimeout(()=>{
+lion.style.transform="scale(1)"
+},200)
+
+}else{
+
+document.getElementById("wrong").play()
+
+lion.textContent="🦁😵"
+
+setTimeout(()=>{
+lion.textContent="🦁"
+},400)
+
+}
+
+newRound()
+
+}
+
+function startTimer(){
 
 setInterval(()=>{
 
 time--
-document.getElementById("time").innerText="⏱ "+time
+timerEl.textContent="⏱ Time: "+time
 
 if(time<=0){
-alert("🏆 คะแนนของคุณ: "+score)
+
+alert("Game Over! Score: "+score)
+
+if(score>best){
+localStorage.setItem("best",score)
+}
+
 location.reload()
+
 }
 
 },1000)
 
 }
 
-const video=document.getElementById("video")
-const canvas=document.getElementById("canvas")
-const ctx=canvas.getContext("2d")
-
-navigator.mediaDevices.getUserMedia({
-video:{ facingMode:"user" }
-}).then(stream=>{
-video.srcObject=stream
-})
-
-const hands=new Hands({
-locateFile:file=>{
-return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-}
-})
-
-hands.setOptions({
-maxNumHands:1,
-modelComplexity:1,
-minDetectionConfidence:0.7,
-minTrackingConfidence:0.7
-})
-
-hands.onResults(results=>{
-
-canvas.width=video.videoWidth
-canvas.height=video.videoHeight
-ctx.clearRect(0,0,canvas.width,canvas.height)
-
-if(!results.multiHandLandmarks) return
-if(!gameStarted) return
-
-const hand=results.multiHandLandmarks[0]
-
-const x=(1-hand[8].x)*canvas.width
-const y=hand[8].y*canvas.height
-
-ctx.beginPath()
-ctx.arc(x,y,20,0,Math.PI*2)
-ctx.fillStyle="yellow"
-ctx.fill()
-
-let now=Date.now()
-if(now<cooldown) return
-
-if(x<canvas.width*0.3){
-answer("left")
-cooldown=now+1200
-}
-
-if(x>canvas.width*0.7){
-answer("right")
-cooldown=now+1200
-}
-
-})
-
-function answer(side){
-
-let correct=false
-
-if(current.type=="green" && side=="left") correct=true
-if(current.type=="yellow" && side=="left") correct=true
-if(current.type=="red" && side=="right") correct=true
-
-if(correct){
-score++
-document.getElementById("correct").play()
-}else{
-document.getElementById("wrong").play()
-}
-
-document.getElementById("score").innerText="Score:"+score
-newFood()
-
-}
-
-const camera=new Camera(video,{
-onFrame:async()=>{
-await hands.send({image:video})
-},
-width:1280,
-height:720
-})
-
-camera.start()
+newRound()
+startTimer()
 
 </script>
 
