@@ -8,42 +8,62 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
+
 body{
 margin:0;
+overflow:hidden;
 font-family:Arial;
-background:#0f172a;
 color:white;
 text-align:center;
 }
 
-header{
-background:#111827;
-padding:15px;
-font-size:32px;
+/* กล้องเต็มจอ */
+
+video{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+object-fit:cover;
+transform:scaleX(-1);
+z-index:-1;
+}
+
+/* UI */
+
+#game{
+position:absolute;
+width:100%;
+top:0;
+}
+
+#title{
+font-size:40px;
+margin-top:10px;
 }
 
 #lion{
 font-size:70px;
-transition:0.2s;
+margin:10px;
 }
 
 #food{
 font-size:120px;
-margin:20px;
+margin-top:20px;
 }
 
 #choices{
 display:flex;
 justify-content:center;
-gap:50px;
-margin-top:20px;
+gap:60px;
+margin-top:30px;
 }
 
 .choice{
-width:260px;
-padding:30px;
-font-size:28px;
-border-radius:16px;
+padding:30px 60px;
+font-size:30px;
+border-radius:20px;
 }
 
 .green{background:#22c55e}
@@ -55,19 +75,16 @@ margin-top:20px;
 font-size:24px;
 }
 
-video{
-position:fixed;
-bottom:10px;
-right:10px;
-width:200px;
-border-radius:10px;
-}
 </style>
 </head>
 
 <body>
 
-<header>🦁 Healthy Food Game</header>
+<video id="video" autoplay playsinline></video>
+
+<div id="game">
+
+<div id="title">🦁 Healthy Food Game</div>
 
 <div id="lion">🦁</div>
 
@@ -81,7 +98,7 @@ border-radius:10px;
 🏆 Best <span id="best">0</span>
 </div>
 
-<video id="video" autoplay></video>
+</div>
 
 <audio autoplay loop>
 <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_chinese_new_year_drum.mp3">
@@ -92,8 +109,8 @@ border-radius:10px;
 const foods=[
 {emoji:"🍎",type:"green"},
 {emoji:"🥦",type:"green"},
-{emoji:"🍌",type:"green"},
 {emoji:"🍉",type:"green"},
+{emoji:"🍌",type:"green"},
 
 {emoji:"🍚",type:"yellow"},
 {emoji:"🍞",type:"yellow"},
@@ -115,34 +132,34 @@ const foodEl=document.getElementById("food")
 const choicesEl=document.getElementById("choices")
 const scoreEl=document.getElementById("score")
 const timeEl=document.getElementById("time")
-const lion=document.getElementById("lion")
-const bestEl=document.getElementById("best")
-
-let best=localStorage.getItem("lionBest")||0
-bestEl.innerText=best
 
 function newRound(){
 
 currentFood=foods[Math.floor(Math.random()*foods.length)]
+
 foodEl.innerText=currentFood.emoji
 
 choicesEl.innerHTML=""
 
 let types=["green","yellow","red"]
+
 types.sort(()=>0.5-Math.random())
+
 types=types.slice(0,2)
 
 types.forEach(type=>{
 
-let div=document.createElement("div")
-div.className="choice "+type
-div.dataset.type=type
+let btn=document.createElement("div")
 
-if(type=="green")div.innerText="🟢 กินได้บ่อย"
-if(type=="yellow")div.innerText="🟡 กินพอดี"
-if(type=="red")div.innerText="🔴 กินแต่น้อย"
+btn.className="choice "+type
 
-choicesEl.appendChild(div)
+btn.dataset.type=type
+
+if(type=="green")btn.innerText="🟢 กินได้บ่อย"
+if(type=="yellow")btn.innerText="🟡 กินพอดี"
+if(type=="red")btn.innerText="🔴 กินแต่น้อย"
+
+choicesEl.appendChild(btn)
 
 })
 
@@ -151,6 +168,7 @@ choicesEl.appendChild(div)
 function answer(type){
 
 if(lock)return
+
 lock=true
 
 if(type==currentFood.type){
@@ -158,15 +176,14 @@ if(type==currentFood.type){
 score++
 scoreEl.innerText=score
 
-lion.style.transform="scale(1.4)"
-setTimeout(()=>{lion.style.transform="scale(1)"},200)
-
 }
 
 setTimeout(()=>{
+
 lock=false
 newRound()
-},400)
+
+},500)
 
 }
 
@@ -208,9 +225,10 @@ hands.onResults(results=>{
 if(results.multiHandLandmarks){
 
 let hand=results.multiHandLandmarks[0]
+
 let palm=hand[9]
 
-let x=palm.x*window.innerWidth
+let x=(1-palm.x)*window.innerWidth
 let y=palm.y*window.innerHeight
 
 checkTouch(x,y)
@@ -223,8 +241,8 @@ const camera=new Camera(video,{
 onFrame:async()=>{
 await hands.send({image:video})
 },
-width:640,
-height:480
+width:1280,
+height:720
 })
 
 camera.start()
@@ -232,15 +250,13 @@ camera.start()
 setInterval(()=>{
 
 time--
+
 timeEl.innerText=time
 
 if(time<=0){
 
-if(score>best){
-localStorage.setItem("lionBest",score)
-}
-
 alert("Game Over! Score: "+score)
+
 location.reload()
 
 }
