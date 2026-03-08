@@ -1,110 +1,82 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-<title>Healthy Food Lion Game</title>
+<title>Vocab Camera Game</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
 
-html,body{
+body{
 margin:0;
-padding:0;
-width:100%;
-height:100%;
 overflow:hidden;
 font-family:sans-serif;
-background:black;
+text-align:center;
 color:white;
 }
 
 video{
 position:fixed;
-top:0;
-left:0;
-width:100vw;
-height:100vh;
+width:100%;
+height:100%;
 object-fit:cover;
 transform:scaleX(-1);
 z-index:-1;
 }
 
-#cursor{
+.word{
 position:absolute;
-width:60px;
-height:60px;
-background:#00ff88;
-border:5px solid white;
-border-radius:50%;
-transform:translate(-30px,-30px);
-pointer-events:none;
-}
-
-#score{
-position:absolute;
-left:20px;
-top:20px;
-font-size:32px;
-}
-
-#timer{
-position:absolute;
-right:20px;
-top:20px;
-font-size:32px;
-}
-
-#lion{
-position:absolute;
-top:90px;
+top:20%;
 width:100%;
-text-align:center;
 font-size:80px;
+font-weight:bold;
 }
 
-#food{
+.score{
 position:absolute;
-top:170px;
-width:100%;
-text-align:center;
+top:20px;
+right:30px;
+font-size:30px;
+}
+
+.timer{
+position:absolute;
+top:20px;
+left:50%;
+transform:translateX(-50%);
+font-size:40px;
+background:black;
+padding:10px 20px;
+border-radius:20px;
+}
+
+.choice{
+position:absolute;
+width:300px;
+height:300px;
+border-radius:50%;
+background:white;
+display:flex;
+align-items:center;
+justify-content:center;
 font-size:120px;
 }
 
-.buttons{
-position:absolute;
-bottom:40px;
-width:100%;
-display:flex;
-justify-content:space-around;
+.left{
+left:5%;
+top:50%;
+transform:translateY(-50%);
 }
 
-button{
-width:300px;
-height:140px;
-border:none;
-border-radius:30px;
-font-size:34px;
-font-weight:bold;
-color:white;
-}
-
-.green{background:#2ecc71}
-.yellow{background:#f1c40f}
-.red{background:#e74c3c}
-
-#leader{
-position:absolute;
-right:20px;
-top:120px;
-background:rgba(0,0,0,0.5);
-padding:15px;
-border-radius:15px;
+.right{
+right:5%;
+top:50%;
+transform:translateY(-50%);
 }
 
 </style>
@@ -114,243 +86,89 @@ border-radius:15px;
 
 <video id="video" autoplay playsinline></video>
 
-<div id="cursor"></div>
+<div class="timer" id="timer">60</div>
+<div class="score">Score: <span id="score">0</span></div>
 
-<div id="score">⭐ 0</div>
-<div id="timer">⏱ 60</div>
+<div class="word" id="word">fish</div>
 
-<div id="lion">🦁</div>
-<div id="food">🍎</div>
-
-<div class="buttons">
-
-<button id="green" class="green">🟢 กินบ่อย</button>
-<button id="yellow" class="yellow">🟡 กินพอดี</button>
-<button id="red" class="red">🔴 กินแต่น้อย</button>
-
-</div>
-
-<div id="leader">
-🏆 Leaderboard
-<div id="board"></div>
-</div>
+<div class="choice left" id="left">🐟</div>
+<div class="choice right" id="right">🥓</div>
 
 <script>
 
-const foods=[
-{emoji:"🥦",type:"green"},
-{emoji:"🍎",type:"green"},
-{emoji:"🥕",type:"green"},
-
-{emoji:"🍚",type:"yellow"},
-{emoji:"🍜",type:"yellow"},
-{emoji:"🥪",type:"yellow"},
-
-{emoji:"🍟",type:"red"},
-{emoji:"🍔",type:"red"},
-{emoji:"🍩",type:"red"}
+const words=[
+{word:"fish",correct:"🐟",wrong:"🥓"},
+{word:"apple",correct:"🍎",wrong:"🍔"},
+{word:"banana",correct:"🍌",wrong:"🍟"},
+{word:"milk",correct:"🥛",wrong:"🍩"},
+{word:"egg",correct:"🥚",wrong:"🍬"}
 ]
 
-let score=0
-let time=60
 let current
+let score=0
 
-const foodEl=document.getElementById("food")
-const lion=document.getElementById("lion")
+function next(){
 
-function newFood(){
+current=words[Math.floor(Math.random()*words.length)]
 
-current=foods[Math.floor(Math.random()*foods.length)]
+document.getElementById("word").innerText=current.word
 
-foodEl.innerText=current.emoji
+if(Math.random()>0.5){
+
+left.innerText=current.correct
+right.innerText=current.wrong
+left.dataset.correct="true"
+right.dataset.correct="false"
+
+}else{
+
+left.innerText=current.wrong
+right.innerText=current.correct
+left.dataset.correct="false"
+right.dataset.correct="true"
 
 }
 
-function answer(type){
+}
 
-if(type===current.type){
+function choose(side){
 
+if(side.dataset.correct==="true"){
 score++
+document.getElementById("score").innerText=score
+}
 
-document.getElementById("score").innerText="⭐ "+score
-
-lion.innerText="🦁😋"
-
-setTimeout(()=>{
-
-lion.innerText="🦁"
-
-},500)
+next()
 
 }
 
-newFood()
+left.onclick=()=>choose(left)
+right.onclick=()=>choose(right)
 
-}
+next()
 
-newFood()
+// camera
+
+navigator.mediaDevices.getUserMedia({video:true})
+.then(stream=>{
+video.srcObject=stream
+})
+
+let time=60
 
 setInterval(()=>{
 
 time--
-
-document.getElementById("timer").innerText="⏱ "+time
+timer.innerText=time
 
 if(time<=0){
 
-saveScore()
-
-alert("หมดเวลา คะแนน "+score)
-
+alert("Game Over! Score "+score)
 location.reload()
 
 }
 
 },1000)
-
-function saveScore(){
-
-let scores=JSON.parse(localStorage.getItem("scores")||"[]")
-
-scores.push(score)
-
-scores.sort((a,b)=>b-a)
-
-scores=scores.slice(0,5)
-
-localStorage.setItem("scores",JSON.stringify(scores))
-
-showBoard()
-
-}
-
-function showBoard(){
-
-let scores=JSON.parse(localStorage.getItem("scores")||"[]")
-
-let html=""
-
-scores.forEach(s=>{
-
-html+="<div>"+s+"</div>"
-
-})
-
-document.getElementById("board").innerHTML=html
-
-}
-
-showBoard()
-
-const video=document.getElementById("video")
-
-navigator.mediaDevices.getUserMedia({video:true})
-
-.then(stream=>{
-
-video.srcObject=stream
-
-})
-
-const hands=new Hands({
-
-locateFile:file=>{
-
-return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-
-}
-
-})
-
-hands.setOptions({
-
-maxNumHands:1,
-
-minDetectionConfidence:0.7,
-
-minTrackingConfidence:0.7
-
-})
-
-let holdTime=0
-
-let lastBtn=null
-
-hands.onResults(results=>{
-
-if(!results.multiHandLandmarks) return
-
-const hand=results.multiHandLandmarks[0]
-
-const palm=hand[9]
-
-let x=(1-palm.x)*window.innerWidth
-
-let y=palm.y*window.innerHeight
-
-const cursor=document.getElementById("cursor")
-
-cursor.style.left=x+"px"
-
-cursor.style.top=y+"px"
-
-checkButton(x,y)
-
-})
-
-function checkButton(x,y){
-
-let btn=null
-
-const g=document.getElementById("green").getBoundingClientRect()
-
-const yb=document.getElementById("yellow").getBoundingClientRect()
-
-const r=document.getElementById("red").getBoundingClientRect()
-
-if(x>g.left && x<g.right && y>g.top && y<g.bottom) btn="green"
-
-if(x>yb.left && x<yb.right && y>yb.top && y<yb.bottom) btn="yellow"
-
-if(x>r.left && x<r.right && y>r.top && y<r.bottom) btn="red"
-
-if(btn===lastBtn){
-
-holdTime++
-
-if(holdTime>25){
-
-answer(btn)
-
-holdTime=0
-
-}
-
-}else{
-
-holdTime=0
-
-lastBtn=btn
-
-}
-
-}
-
-const camera=new Camera(video,{
-
-onFrame:async()=>{
-
-await hands.send({image:video})
-
-},
-
-width:640,
-
-height:480
-
-})
-
-camera.start()
 
 </script>
 
