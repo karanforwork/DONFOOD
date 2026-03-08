@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>lion food</title>
+<title>เกมอาหาร 3 สี</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -12,19 +12,24 @@
 body{
 font-family:sans-serif;
 text-align:center;
-background:#f2f2f2;
+margin:0;
+overflow:hidden;
 }
 
-h1{
-font-size:40px;
-}
+/* กล้องเต็มจอ */
 
 #video{
-position:absolute;
-left:0;
+position:fixed;
 top:0;
+left:0;
+width:100vw;
+height:100vh;
+object-fit:cover;
 transform:scaleX(-1);
+z-index:-1;
 }
+
+/* ตัวชี้มือ */
 
 #cursor{
 position:absolute;
@@ -33,14 +38,19 @@ height:40px;
 background:red;
 border-radius:50%;
 pointer-events:none;
+z-index:10;
 }
 
+/* กล่องเกม */
+
 .container{
-margin-top:420px;
+position:absolute;
+bottom:60px;
+width:100%;
 }
 
 .food{
-font-size:36px;
+font-size:40px;
 margin:10px;
 }
 
@@ -59,11 +69,16 @@ width:260px;
 
 #score{
 font-size:30px;
-margin-top:10px;
 }
 
 #timer{
 font-size:28px;
+}
+
+.topUI{
+position:absolute;
+top:10px;
+width:100%;
 }
 
 </style>
@@ -71,12 +86,14 @@ font-size:28px;
 
 <body>
 
+<video id="video" autoplay></video>
+<div id="cursor"></div>
+
+<div class="topUI">
 <h1>🍎 เกมอาหาร 3 สี</h1>
 <div id="timer">เวลา: 60</div>
 <div id="score">คะแนน: 0</div>
-
-<video id="video" width="640" height="480" autoplay></video>
-<div id="cursor"></div>
+</div>
 
 <div class="container">
 <div id="food" class="food"></div>
@@ -165,8 +182,8 @@ if(results.multiHandLandmarks.length>0){
 
 let p=results.multiHandLandmarks[0][8];
 
-let x=(1-p.x)*video.width;
-let y=p.y*video.height;
+let x=(1-p.x)*window.innerWidth;
+let y=p.y*window.innerHeight;
 
 cursor.style.left=x+"px";
 cursor.style.top=y+"px";
@@ -180,8 +197,8 @@ const camera=new Camera(video,{
 onFrame:async()=>{
 await hands.send({image:video});
 },
-width:640,
-height:480
+width:1280,
+height:720
 });
 
 camera.start();
