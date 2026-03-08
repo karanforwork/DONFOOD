@@ -5,10 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Vocab Camera Game</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<title>เกมอาหาร 3 สี</title>
 
 <style>
 
@@ -29,7 +26,7 @@ transform:scaleX(-1);
 z-index:-1;
 }
 
-.word{
+.food{
 position:absolute;
 top:20%;
 width:100%;
@@ -57,14 +54,14 @@ border-radius:20px;
 
 .choice{
 position:absolute;
-width:300px;
-height:300px;
+width:280px;
+height:280px;
 border-radius:50%;
-background:white;
 display:flex;
 align-items:center;
 justify-content:center;
 font-size:120px;
+color:white;
 }
 
 .left{
@@ -79,6 +76,10 @@ top:50%;
 transform:translateY(-50%);
 }
 
+.green{background:#27ae60}
+.yellow{background:#f1c40f;color:black}
+.red{background:#e74c3c}
+
 </style>
 </head>
 
@@ -87,67 +88,104 @@ transform:translateY(-50%);
 <video id="video" autoplay playsinline></video>
 
 <div class="timer" id="timer">60</div>
-<div class="score">Score: <span id="score">0</span></div>
 
-<div class="word" id="word">fish</div>
+<div class="score">คะแนน: <span id="score">0</span></div>
 
-<div class="choice left" id="left">🐟</div>
-<div class="choice right" id="right">🥓</div>
+<div class="food" id="food">แอปเปิล</div>
+
+<div id="left" class="choice"></div>
+<div id="right" class="choice"></div>
 
 <script>
 
-const words=[
-{word:"fish",correct:"🐟",wrong:"🥓"},
-{word:"apple",correct:"🍎",wrong:"🍔"},
-{word:"banana",correct:"🍌",wrong:"🍟"},
-{word:"milk",correct:"🥛",wrong:"🍩"},
-{word:"egg",correct:"🥚",wrong:"🍬"}
+const foods=[
+
+{name:"แอปเปิล 🍎",color:"green"},
+{name:"กล้วย 🍌",color:"green"},
+{name:"แตงโม 🍉",color:"green"},
+{name:"บรอกโคลี 🥦",color:"green"},
+{name:"แครอท 🥕",color:"green"},
+{name:"แตงกวา 🥒",color:"green"},
+
+{name:"ข้าว 🍚",color:"yellow"},
+{name:"ไข่ 🍳",color:"yellow"},
+{name:"นม 🥛",color:"yellow"},
+{name:"ข้าวโพด 🌽",color:"yellow"},
+{name:"มันฝรั่ง 🥔",color:"yellow"},
+{name:"ขนมปัง 🍞",color:"yellow"},
+
+{name:"โดนัท 🍩",color:"red"},
+{name:"เค้ก 🍰",color:"red"},
+{name:"ลูกอม 🍬",color:"red"},
+{name:"น้ำอัดลม 🥤",color:"red"},
+{name:"เฟรนช์ฟราย 🍟",color:"red"},
+{name:"เบอร์เกอร์ 🍔",color:"red"}
+
 ]
 
 let current
 let score=0
 
+function randomColor(){
+
+const colors=["green","yellow","red"]
+return colors[Math.floor(Math.random()*3)]
+
+}
+
 function next(){
 
-current=words[Math.floor(Math.random()*words.length)]
+current=foods[Math.floor(Math.random()*foods.length)]
 
-document.getElementById("word").innerText=current.word
+document.getElementById("food").innerText=current.name
+
+let correct=current.color
+let wrong=randomColor()
+
+while(wrong===correct){
+wrong=randomColor()
+}
 
 if(Math.random()>0.5){
 
-left.innerText=current.correct
-right.innerText=current.wrong
-left.dataset.correct="true"
-right.dataset.correct="false"
+setChoice(left,correct,true)
+setChoice(right,wrong,false)
 
 }else{
 
-left.innerText=current.wrong
-right.innerText=current.correct
-left.dataset.correct="false"
-right.dataset.correct="true"
+setChoice(left,wrong,false)
+setChoice(right,correct,true)
 
 }
 
 }
 
-function choose(side){
+function setChoice(btn,color,isCorrect){
 
-if(side.dataset.correct==="true"){
-score++
-document.getElementById("score").innerText=score
-}
+btn.className="choice "+btn.classList.contains("left")?"left":"right"
+btn.classList.add(color)
 
-next()
+btn.dataset.correct=isCorrect
 
 }
 
 left.onclick=()=>choose(left)
 right.onclick=()=>choose(right)
 
+function choose(btn){
+
+if(btn.dataset.correct==="true"){
+
+score++
+document.getElementById("score").innerText=score
+
+}
+
 next()
 
-// camera
+}
+
+next()
 
 navigator.mediaDevices.getUserMedia({video:true})
 .then(stream=>{
@@ -163,7 +201,7 @@ timer.innerText=time
 
 if(time<=0){
 
-alert("Game Over! Score "+score)
+alert("จบเกม! คะแนน "+score)
 location.reload()
 
 }
