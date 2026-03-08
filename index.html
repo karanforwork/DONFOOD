@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>เกมอาหาร 3 สี</title>
+<title>Lion Food</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -22,13 +22,13 @@ h1{
 position:absolute;
 top:10px;
 width:100%;
-font-size:40px;
+font-size:42px;
 z-index:2;
 }
 
 #timer{
 position:absolute;
-top:70px;
+top:80px;
 left:20px;
 font-size:30px;
 z-index:2;
@@ -36,13 +36,12 @@ z-index:2;
 
 #score{
 position:absolute;
-top:70px;
+top:80px;
 right:20px;
 font-size:30px;
 z-index:2;
 }
 
-/* กล้องเต็มจอ */
 #video{
 position:fixed;
 top:0;
@@ -53,7 +52,6 @@ object-fit:cover;
 transform:scaleX(-1);
 }
 
-/* เคอร์เซอร์มือ */
 #cursor{
 position:fixed;
 width:40px;
@@ -62,18 +60,18 @@ background:red;
 border-radius:50%;
 pointer-events:none;
 z-index:3;
+transition:transform 0.05s linear;
 }
 
-/* กล่องปุ่ม */
 .container{
 position:absolute;
-bottom:30px;
+bottom:40px;
 width:100%;
 z-index:2;
 }
 
 .food{
-font-size:40px;
+font-size:42px;
 margin-bottom:15px;
 }
 
@@ -82,7 +80,7 @@ font-size:30px;
 padding:25px;
 margin:15px;
 border:none;
-border-radius:12px;
+border-radius:14px;
 width:260px;
 }
 
@@ -95,7 +93,8 @@ width:260px;
 
 <body>
 
-<h1>🍎 เกมอาหาร 3 สี</h1>
+<h1>🦁 Lion Food</h1>
+
 <div id="timer">เวลา: 60</div>
 <div id="score">คะแนน: 0</div>
 
@@ -161,6 +160,7 @@ newFood();
 setInterval(()=>{
 time--;
 document.getElementById("timer").innerText="เวลา: "+time;
+
 if(time<=0){
 alert("หมดเวลา คะแนน "+score);
 location.reload();
@@ -177,27 +177,37 @@ locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 hands.setOptions({
 maxNumHands:1,
 modelComplexity:1,
-minDetectionConfidence:0.7,
-minTrackingConfidence:0.7
+minDetectionConfidence:0.75,
+minTrackingConfidence:0.75
 });
 
 let hoverButton=null;
 let hoverStart=0;
 
+/* smoothing cursor */
+let smoothX=0;
+let smoothY=0;
+
 hands.onResults(results=>{
-if(results.multiHandLandmarks.length>0){
+
+if(!results.multiHandLandmarks || results.multiHandLandmarks.length==0){
+return;
+}
 
 let p=results.multiHandLandmarks[0][8];
 
-let x=(1-p.x)*window.innerWidth;
-let y=p.y*window.innerHeight;
+let targetX=(1-p.x)*window.innerWidth;
+let targetY=p.y*window.innerHeight;
 
-cursor.style.left=x+"px";
-cursor.style.top=y+"px";
+/* smooth movement */
+smoothX = smoothX*0.7 + targetX*0.3;
+smoothY = smoothY*0.7 + targetY*0.3;
 
-checkHover(x,y);
+cursor.style.left=smoothX+"px";
+cursor.style.top=smoothY+"px";
 
-}
+checkHover(smoothX,smoothY);
+
 });
 
 const camera=new Camera(video,{
@@ -235,7 +245,7 @@ hoverButton=found;
 hoverStart=Date.now();
 }
 
-if(Date.now()-hoverStart>700){
+if(Date.now()-hoverStart>800){
 found.click();
 hoverButton=null;
 }
