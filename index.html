@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>🦁 Lion Dance Food Game</title>
+<title>เกมอาหาร 3 สี 🦁</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -12,79 +12,55 @@
 body{
 margin:0;
 font-family:sans-serif;
+background:linear-gradient(#b30000,#ffcc00);
 text-align:center;
 color:white;
 overflow:hidden;
 }
 
-#video{
-position:fixed;
-top:0;
-left:0;
-width:100vw;
-height:100vh;
-object-fit:cover;
-transform:scaleX(-1);
-z-index:-2;
-opacity:0.35;
-}
-
-.overlay{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(120,0,0,0.25);
-z-index:-1;
-}
-
 h1{
-font-size:48px;
+font-size:50px;
 margin-top:10px;
 }
 
-#lion{
-font-size:80px;
-}
-
-#timer,#score{
-font-size:28px;
-}
-
-#food{
-font-size:44px;
+#game{
 margin-top:20px;
 }
 
-.buttons{
-position:absolute;
-bottom:70px;
-width:100%;
+.food{
+font-size:60px;
+margin:30px;
 }
 
 button{
-font-size:34px;
+font-size:40px;
 padding:30px;
 margin:20px;
+width:300px;
 border:none;
-border-radius:16px;
-width:260px;
-box-shadow:0 8px 20px rgba(0,0,0,0.4);
+border-radius:20px;
+cursor:pointer;
 }
 
-.green{background:#2ecc71;color:white}
+.green{background:#2ecc71}
 .yellow{background:#f1c40f}
-.red{background:#e74c3c;color:white}
+.red{background:#e74c3c}
 
-#cursor{
+#pointer{
 position:absolute;
 width:40px;
 height:40px;
-background:gold;
+background:cyan;
 border-radius:50%;
-border:4px solid white;
 pointer-events:none;
+}
+
+video{
+position:absolute;
+right:10px;
+bottom:10px;
+width:200px;
+border-radius:10px;
 }
 
 </style>
@@ -92,183 +68,78 @@ pointer-events:none;
 
 <body>
 
-<video id="video" autoplay></video>
-<div class="overlay"></div>
+<h1>🦁 เกมอาหาร 3 สี</h1>
 
-<h1>🦁 Lion Dance Food Game</h1>
+<div id="game">
+<div class="food" id="food">🍎</div>
 
-<div id="lion">🦁</div>
+<button class="green" onclick="answer('green')">เขียว</button>
+<button class="yellow" onclick="answer('yellow')">เหลือง</button>
+<button class="red" onclick="answer('red')">แดง</button>
 
-<div id="timer">เวลา: 60</div>
-<div id="score">คะแนน: 0</div>
-
-<div id="food"></div>
-
-<div class="buttons">
-
-<button class="green" id="green">🟢 เขียว</button>
-<button class="yellow" id="yellow">🟡 เหลือง</button>
-<button class="red" id="red">🔴 แดง</button>
-
+<h2 id="score">คะแนน 0</h2>
 </div>
 
-<div id="cursor"></div>
+<div id="pointer"></div>
 
-<audio id="drum" src="https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3"></audio>
+<video id="video" autoplay playsinline></video>
+
+<audio id="drum" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3a36d62c36.mp3?filename=chinese-drum-110045.mp3"></audio>
 
 <script>
 
 const foods=[
-
-{name:"🥦 บรอกโคลี",type:"green"},
-{name:"🥬 ผักกาด",type:"green"},
-{name:"🥒 แตงกวา",type:"green"},
-{name:"🥕 แครอท",type:"green"},
-{name:"🥗 สลัด",type:"green"},
-
-{name:"🍚 ข้าว",type:"yellow"},
-{name:"🍌 กล้วย",type:"yellow"},
-{name:"🍞 ขนมปัง",type:"yellow"},
-{name:"🥔 มันฝรั่ง",type:"yellow"},
-{name:"🥚 ไข่",type:"yellow"},
-{name:"🍊 ส้ม",type:"yellow"},
-{name:"🥭 มะม่วง",type:"yellow"},
-
-{name:"🍰 เค้ก",type:"red"},
-{name:"🍫 ช็อกโกแลต",type:"red"},
-{name:"🍬 ลูกอม",type:"red"},
-{name:"🍟 เฟรนช์ฟราย",type:"red"},
-{name:"🍕 พิซซ่า",type:"red"},
-{name:"🥤 น้ำอัดลม",type:"red"},
-{name:"🍩 โดนัท",type:"red"},
-{name:"🍦 ไอศกรีม",type:"red"}
-
+{name:"🥦",type:"green"},
+{name:"🥬",type:"green"},
+{name:"🥒",type:"green"},
+{name:"🍏",type:"green"},
+{name:"🥑",type:"green"},
+{name:"🥕",type:"yellow"},
+{name:"🌽",type:"yellow"},
+{name:"🍌",type:"yellow"},
+{name:"🍍",type:"yellow"},
+{name:"🥭",type:"yellow"},
+{name:"🍟",type:"red"},
+{name:"🍔",type:"red"},
+{name:"🍕",type:"red"},
+{name:"🍩",type:"red"},
+{name:"🍗",type:"red"},
+{name:"🍉",type:"green"},
+{name:"🍋",type:"yellow"},
+{name:"🥨",type:"red"},
+{name:"🍠",type:"yellow"},
+{name:"🥗",type:"green"}
 ]
 
 let current
 let score=0
-let time=60
 
 function newFood(){
-
 current=foods[Math.floor(Math.random()*foods.length)]
-food.innerText=current.name
-
+document.getElementById("food").innerText=current.name
 }
 
-function answer(type){
+function answer(color){
 
-if(type===current.type){
-
+if(color==current.type){
 score++
-scoreDiv.innerText="คะแนน: "+score
+document.getElementById("drum").play()
+}
 
-lion.innerText="🦁😋"
-drum.play()
-
-setTimeout(()=>lion.innerText="🦁",600)
-
-}else{
-
-lion.innerText="🦁😵"
-setTimeout(()=>lion.innerText="🦁",600)
+document.getElementById("score").innerText="คะแนน "+score
+newFood()
 
 }
 
 newFood()
 
-}
-
-green.onclick=()=>answer("green")
-yellow.onclick=()=>answer("yellow")
-red.onclick=()=>answer("red")
-
-const scoreDiv=document.getElementById("score")
-
-newFood()
-
-setInterval(()=>{
-
-time--
-timer.innerText="เวลา: "+time
-
-if(time<=0){
-
-alert("หมดเวลา คะแนน "+score)
-location.reload()
-
-}
-
-},1000)
-
-/* HAND TRACKING */
-
-let cx=300
-let cy=300
-
-function smooth(x,y){
-
-cx=cx+(x-cx)*0.3
-cy=cy+(y-cy)*0.3
-
-cursor.style.left=cx+"px"
-cursor.style.top=cy+"px"
-
-}
-
-/* ระบบชี้ + ค้าง */
-
-let hoverButton=null
-let hoverTime=0
-
-function checkHover(){
-
-let buttons=[green,yellow,red]
-let found=null
-
-buttons.forEach(b=>{
-
-let r=b.getBoundingClientRect()
-
-if(cx>r.left&&cx<r.right&&cy>r.top&&cy<r.bottom){
-
-found=b
-
-}
-
-})
-
-if(found){
-
-if(hoverButton===found){
-
-hoverTime++
-
-if(hoverTime>25){
-
-found.click()
-hoverTime=0
-
-}
-
-}else{
-
-hoverButton=found
-hoverTime=0
-
-}
-
-}else{
-
-hoverButton=null
-hoverTime=0
-
-}
-
-}
+const video=document.getElementById("video")
+const pointer=document.getElementById("pointer")
 
 const hands=new Hands({
-locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+locateFile:(file)=>{
+return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+}
 })
 
 hands.setOptions({
@@ -281,19 +152,36 @@ hands.onResults(results=>{
 
 if(results.multiHandLandmarks.length>0){
 
-let p=results.multiHandLandmarks[0][8]
+const hand=results.multiHandLandmarks[0]
 
-let x=(1-p.x)*window.innerWidth
-let y=p.y*window.innerHeight
+const x=hand[8].x*window.innerWidth
+const y=hand[8].y*window.innerHeight
 
-smooth(x,y)
-checkHover()
+pointer.style.left=x+"px"
+pointer.style.top=y+"px"
+
+const buttons=document.querySelectorAll("button")
+
+buttons.forEach(btn=>{
+
+const rect=btn.getBoundingClientRect()
+
+if(
+x>rect.left &&
+x<rect.right &&
+y>rect.top &&
+y<rect.bottom
+){
+
+btn.click()
 
 }
 
 })
 
-const video=document.getElementById("video")
+}
+
+})
 
 const camera=new Camera(video,{
 onFrame:async()=>{
@@ -304,10 +192,6 @@ height:480
 })
 
 camera.start()
-
-document.body.onclick=()=>{
-document.documentElement.requestFullscreen()
-}
 
 </script>
 
