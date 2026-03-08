@@ -1,99 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>🦁 Healthy Food Game</title>
+<title>Healthy Food Lion Game</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
+
 body{
 margin:0;
-overflow:hidden;
-font-family:Arial;
-color:white;
+font-family:sans-serif;
 text-align:center;
+background:#222;
+color:white;
+overflow:hidden;
 }
 
 video{
-position:fixed;
+position:absolute;
 top:0;
 left:0;
 width:100%;
 height:100%;
 object-fit:cover;
 transform:scaleX(-1);
-z-index:-1;
 }
 
-#title{
-font-size:42px;
-margin-top:10px;
-font-weight:bold;
-text-shadow:0 0 10px black;
+#ui{
+position:absolute;
+top:0;
+width:100%;
+}
+
+h1{
+font-size:40px;
+margin-top:20px;
 }
 
 #lion{
 font-size:80px;
+margin-top:10px;
 }
 
 #food{
-font-size:120px;
-margin-top:20px;
+font-size:90px;
+margin-top:10px;
 }
 
-#choices{
+#score{
 position:absolute;
-bottom:70px;
+left:20px;
+top:20px;
+font-size:30px;
+}
+
+#timer{
+position:absolute;
+right:20px;
+top:20px;
+font-size:30px;
+}
+
+.buttons{
+position:absolute;
+bottom:40px;
 width:100%;
 display:flex;
-justify-content:center;
-gap:70px;
+justify-content:space-around;
 }
 
-.choice{
-padding:25px 60px;
+button{
+width:280px;
+height:120px;
 font-size:30px;
-border-radius:25px;
-transition:0.2s;
-box-shadow:0 0 20px rgba(0,0,0,0.5);
+border-radius:30px;
+border:none;
+color:white;
+font-weight:bold;
 }
 
-.green{background:#22c55e}
-.yellow{background:#eab308}
-.red{background:#ef4444}
-
-.glow{
-box-shadow:0 0 40px yellow;
-transform:scale(1.1);
+#left{
+background:#e53935;
 }
 
-#scoreBox{
-position:absolute;
-top:15px;
-left:20px;
-font-size:26px;
-text-shadow:0 0 10px black;
+#right{
+background:#43a047;
 }
 
-#timeBox{
-position:absolute;
-top:15px;
-right:20px;
-font-size:26px;
-text-shadow:0 0 10px black;
-}
-
-#cursor{
-position:absolute;
-width:50px;
-height:50px;
-border-radius:50%;
-background:yellow;
-opacity:0.8;
-pointer-events:none;
-}
 </style>
 </head>
 
@@ -101,187 +96,188 @@ pointer-events:none;
 
 <video id="video" autoplay playsinline></video>
 
-<div id="cursor"></div>
+<div id="ui">
 
-<div id="scoreBox">⭐ Score <span id="score">0</span></div>
-<div id="timeBox">⏱ <span id="time">60</span></div>
+<div id="score">⭐ Score 0</div>
+<div id="timer">⏱ 60</div>
 
-<div id="title">🦁 Healthy Food Game</div>
+<h1>🦁 Healthy Food Game</h1>
+
 <div id="lion">🦁</div>
+<div id="food">🍎</div>
 
-<div id="food"></div>
+</div>
 
-<div id="choices"></div>
+<div class="buttons">
+
+<button id="left">🔴 กินแต่น้อย</button>
+<button id="right">🟢 กินบ่อย</button>
+
+</div>
+
+<audio id="correct">
+<source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg">
+</audio>
+
+<audio id="wrong">
+<source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg">
+</audio>
 
 <script>
 
-const foods=[
-{emoji:"🍎",type:"green"},
-{emoji:"🥦",type:"green"},
-{emoji:"🍉",type:"green"},
-{emoji:"🍌",type:"green"},
-{emoji:"🍚",type:"yellow"},
-{emoji:"🍞",type:"yellow"},
-{emoji:"🥚",type:"yellow"},
-{emoji:"🍗",type:"yellow"},
-{emoji:"🍔",type:"red"},
-{emoji:"🍟",type:"red"},
-{emoji:"🍕",type:"red"},
-{emoji:"🍩",type:"red"}
-]
+const foods = [
 
-let currentFood
-let score=0
-let time=60
+{emoji:"🍎",type:"good"},
+{emoji:"🥦",type:"good"},
+{emoji:"🥕",type:"good"},
+{emoji:"🍌",type:"good"},
 
-const foodEl=document.getElementById("food")
-const choicesEl=document.getElementById("choices")
-const scoreEl=document.getElementById("score")
-const timeEl=document.getElementById("time")
-const cursor=document.getElementById("cursor")
+{emoji:"🍔",type:"bad"},
+{emoji:"🍟",type:"bad"},
+{emoji:"🍕",type:"bad"},
+{emoji:"🍩",type:"bad"}
 
-let hoverButton=null
-let hoverStart=0
+];
 
-function newRound(){
+let current;
+let score=0;
+let time=60;
 
-currentFood=foods[Math.floor(Math.random()*foods.length)]
+const foodDiv=document.getElementById("food");
+const scoreDiv=document.getElementById("score");
+const timerDiv=document.getElementById("timer");
 
-foodEl.innerText=currentFood.emoji
+function newFood(){
 
-choicesEl.innerHTML=""
-
-let types=["green","yellow","red"]
-
-types.sort(()=>0.5-Math.random())
-
-types=types.slice(0,2)
-
-types.forEach(type=>{
-
-let btn=document.createElement("div")
-
-btn.className="choice "+type
-
-btn.dataset.type=type
-
-if(type=="green")btn.innerText="🟢 กินบ่อย"
-if(type=="yellow")btn.innerText="🟡 กินพอดี"
-if(type=="red")btn.innerText="🔴 กินแต่น้อย"
-
-choicesEl.appendChild(btn)
-
-})
+current=foods[Math.floor(Math.random()*foods.length)];
+foodDiv.innerText=current.emoji;
 
 }
 
 function answer(type){
 
-if(type==currentFood.type){
-score++
-scoreEl.innerText=score
+if(current.type==="good" && type==="right"){
+correct();
 }
 
-newRound()
-
+else if(current.type==="bad" && type==="left"){
+correct();
 }
 
-function checkTouch(x,y){
-
-let touched=null
-
-document.querySelectorAll(".choice").forEach(btn=>{
-
-btn.classList.remove("glow")
-
-let r=btn.getBoundingClientRect()
-
-let padding=120
-
-if(
-x>r.left-padding &&
-x<r.right+padding &&
-y>r.top-padding &&
-y<r.bottom+padding
-){
-touched=btn
-btn.classList.add("glow")
+else{
+wrong();
 }
 
-})
-
-if(touched){
-
-if(hoverButton!=touched){
-hoverButton=touched
-hoverStart=Date.now()
-}
-
-if(Date.now()-hoverStart>700){
-answer(touched.dataset.type)
-hoverButton=null
-}
-
-}else{
-hoverButton=null
-}
+newFood();
 
 }
 
-const video=document.getElementById("video")
+function correct(){
 
-const hands=new Hands({
-locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-})
+score++;
+scoreDiv.innerText="⭐ Score "+score;
+
+document.getElementById("correct").play();
+
+}
+
+function wrong(){
+
+document.getElementById("wrong").play();
+
+}
+
+newFood();
+
+setInterval(()=>{
+
+time--;
+timerDiv.innerText="⏱ "+time;
+
+if(time<=0){
+
+alert("หมดเวลา คะแนน = "+score);
+location.reload();
+
+}
+
+},1000);
+
+const video=document.getElementById("video");
+
+navigator.mediaDevices.getUserMedia({video:true}).then(stream=>{
+video.srcObject=stream;
+});
+
+const hands = new Hands({
+locateFile: file => {
+return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+}
+});
 
 hands.setOptions({
 maxNumHands:1,
 minDetectionConfidence:0.7,
 minTrackingConfidence:0.7
-})
+});
+
+let cooldown=false;
 
 hands.onResults(results=>{
 
-if(results.multiHandLandmarks){
+if(!results.multiHandLandmarks)return;
 
-let hand=results.multiHandLandmarks[0]
-let palm=hand[9]
+const hand=results.multiHandLandmarks[0];
 
-let x=(1-palm.x)*window.innerWidth
-let y=palm.y*window.innerHeight
+const palm=hand[9];
 
-cursor.style.left=x+"px"
-cursor.style.top=y+"px"
+let x=palm.x*window.innerWidth;
+let y=palm.y*window.innerHeight;
 
-checkTouch(x,y)
+const leftBtn=document.getElementById("left").getBoundingClientRect();
+const rightBtn=document.getElementById("right").getBoundingClientRect();
+
+if(!cooldown){
+
+if(
+x>leftBtn.left &&
+x<leftBtn.right &&
+y>leftBtn.top &&
+y<leftBtn.bottom
+){
+
+cooldown=true;
+answer("left");
+setTimeout(()=>cooldown=false,800);
 
 }
 
-})
+if(
+x>rightBtn.left &&
+x<rightBtn.right &&
+y>rightBtn.top &&
+y<rightBtn.bottom
+){
 
-const camera=new Camera(video,{
-onFrame:async()=>{
-await hands.send({image:video})
+cooldown=true;
+answer("right");
+setTimeout(()=>cooldown=false,800);
+
+}
+
+}
+
+});
+
+const camera = new Camera(video,{
+onFrame: async ()=>{
+await hands.send({image:video});
 },
-width:1280,
-height:720
-})
+width:640,
+height:480
+});
 
-camera.start()
-
-setInterval(()=>{
-
-time--
-timeEl.innerText=time
-
-if(time<=0){
-alert("หมดเวลา คะแนน: "+score)
-location.reload()
-}
-
-},1000)
-
-newRound()
+camera.start();
 
 </script>
 
