@@ -2,7 +2,8 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>🦁 Healthy Food Game</title>
+
+<title>Healthy Food Game</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -11,56 +12,84 @@
 
 body{
 margin:0;
-font-family:sans-serif;
-text-align:center;
-background:black;
-color:white;
 overflow:hidden;
+font-family:Arial;
+color:white;
+text-align:center;
 }
+
+/* กล้อง */
 
 video{
 position:fixed;
 top:0;
 left:0;
-width:100vw;
-height:100vh;
+width:100%;
+height:100%;
 object-fit:cover;
+transform:scaleX(-1);
 z-index:-1;
 }
 
-#ui{
+/* UI */
+
+#game{
 position:absolute;
-top:0;
 width:100%;
-padding-top:40px;
+top:0;
 }
 
-.food{
-font-size:90px;
-margin:10px;
+#title{
+font-size:42px;
+margin-top:15px;
+font-weight:bold;
 }
 
-.buttons{
+#lion{
+font-size:80px;
+animation:jump 1s infinite alternate;
+}
+
+@keyframes jump{
+from{transform:translateY(0)}
+to{transform:translateY(-10px)}
+}
+
+#food{
+font-size:130px;
+margin-top:10px;
+}
+
+#choices{
 display:flex;
 justify-content:center;
-gap:20px;
-margin-top:20px;
+gap:60px;
+margin-top:25px;
 }
 
-.btn{
-padding:20px 40px;
-font-size:22px;
-border-radius:15px;
-color:white;
+.choice{
+padding:25px 60px;
+font-size:30px;
+border-radius:20px;
+cursor:pointer;
 }
 
-.green{background:#2ecc71;}
-.yellow{background:#f1c40f;}
-.red{background:#e74c3c;}
+.green{background:#22c55e}
+.yellow{background:#eab308}
+.red{background:#ef4444}
 
-.score{
+#hud{
 margin-top:20px;
-font-size:20px;
+font-size:26px;
+}
+
+#cursor{
+position:absolute;
+width:40px;
+height:40px;
+border-radius:50%;
+background:yellow;
+pointer-events:none;
 }
 
 </style>
@@ -68,80 +97,134 @@ font-size:20px;
 
 <body>
 
-<video id="cam" autoplay playsinline></video>
+<video id="video" autoplay playsinline></video>
 
-<div id="ui">
+<div id="cursor"></div>
 
-<h1>🦁 Healthy Food Game</h1>
+<div id="game">
 
-<div class="food" id="food">🍔</div>
+<div id="title">🦁 Healthy Food Game</div>
 
-<div class="buttons">
+<div id="lion">🦁</div>
 
-<div class="btn green" id="left">🟢 กินได้บ่อย</div>
-<div class="btn yellow" id="right">🟡 กินพอดี</div>
+<div id="food"></div>
 
-</div>
+<div id="choices"></div>
 
-<div class="score">
+<div id="hud">
 ⏱ <span id="time">60</span>
 ⭐ Score <span id="score">0</span>
 </div>
 
 </div>
 
+<audio autoplay loop>
+<source src="https://cdn.pixabay.com/audio/2022/02/23/audio_chinese-drum.mp3">
+</audio>
+
 <script>
 
-const foods = [
+const foods=[
+
 {emoji:"🍎",type:"green"},
 {emoji:"🥦",type:"green"},
-{emoji:"🍌",type:"yellow"},
+{emoji:"🍉",type:"green"},
+{emoji:"🍌",type:"green"},
+
+{emoji:"🍚",type:"yellow"},
 {emoji:"🍞",type:"yellow"},
+{emoji:"🥚",type:"yellow"},
+{emoji:"🍗",type:"yellow"},
+
+{emoji:"🍔",type:"red"},
 {emoji:"🍟",type:"red"},
-{emoji:"🍔",type:"red"}
+{emoji:"🍕",type:"red"},
+{emoji:"🍩",type:"red"}
+
 ]
 
-let current
+let currentFood
 let score=0
 let time=60
+let lock=false
 
-function newFood(){
-current=foods[Math.floor(Math.random()*foods.length)]
-food.innerHTML=current.emoji
-}
+const foodEl=document.getElementById("food")
+const choicesEl=document.getElementById("choices")
+const scoreEl=document.getElementById("score")
+const timeEl=document.getElementById("time")
+const cursor=document.getElementById("cursor")
 
-newFood()
+function newRound(){
 
-setInterval(()=>{
-time--
-document.getElementById("time").innerText=time
-if(time<=0){
-alert("Game Over Score "+score)
-location.reload()
-}
-},1000)
+currentFood=foods[Math.floor(Math.random()*foods.length)]
 
-function answer(side){
+foodEl.innerText=currentFood.emoji
 
-let correct=false
+choicesEl.innerHTML=""
 
-if(side=="left" && current.type=="green") correct=true
-if(side=="right" && current.type=="yellow") correct=true
+let types=["green","yellow","red"]
 
-if(correct){
-score++
-document.getElementById("score").innerText=score
-}
+types.sort(()=>0.5-Math.random())
 
-newFood()
-}
+types=types.slice(0,2)
 
-const video=document.getElementById("cam")
+types.forEach(type=>{
 
-navigator.mediaDevices.getUserMedia({video:true})
-.then(stream=>{
-video.srcObject=stream
+let btn=document.createElement("div")
+
+btn.className="choice "+type
+
+btn.dataset.type=type
+
+if(type=="green")btn.innerText="🟢 กินได้บ่อย"
+if(type=="yellow")btn.innerText="🟡 กินพอดี"
+if(type=="red")btn.innerText="🔴 กินแต่น้อย"
+
+choicesEl.appendChild(btn)
+
 })
+
+}
+
+function answer(type){
+
+if(lock)return
+
+lock=true
+
+if(type==currentFood.type){
+
+score++
+scoreEl.innerText=score
+
+}
+
+setTimeout(()=>{
+
+lock=false
+newRound()
+
+},600)
+
+}
+
+function checkTouch(x,y){
+
+document.querySelectorAll(".choice").forEach(btn=>{
+
+let r=btn.getBoundingClientRect()
+
+if(x>r.left && x<r.right && y>r.top && y<r.bottom){
+
+answer(btn.dataset.type)
+
+}
+
+})
+
+}
+
+const video=document.getElementById("video")
 
 const hands=new Hands({
 locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
@@ -149,7 +232,6 @@ locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 
 hands.setOptions({
 maxNumHands:1,
-modelComplexity:1,
 minDetectionConfidence:0.7,
 minTrackingConfidence:0.7
 })
@@ -160,19 +242,15 @@ if(results.multiHandLandmarks){
 
 let hand=results.multiHandLandmarks[0]
 
-let x=hand[9].x*window.innerWidth
-let y=hand[9].y*window.innerHeight
+let palm=hand[9]
 
-let left=document.getElementById("left").getBoundingClientRect()
-let right=document.getElementById("right").getBoundingClientRect()
+let x=(1-palm.x)*window.innerWidth
+let y=palm.y*window.innerHeight
 
-if(x>left.left && x<left.right && y>left.top && y<left.bottom){
-answer("left")
-}
+cursor.style.left=x+"px"
+cursor.style.top=y+"px"
 
-if(x>right.left && x<right.right && y>right.top && y<right.bottom){
-answer("right")
-}
+checkTouch(x,y)
 
 }
 
@@ -182,11 +260,29 @@ const camera=new Camera(video,{
 onFrame:async()=>{
 await hands.send({image:video})
 },
-width:640,
-height:480
+width:1280,
+height:720
 })
 
 camera.start()
+
+setInterval(()=>{
+
+time--
+
+timeEl.innerText=time
+
+if(time<=0){
+
+alert("Game Over! Score: "+score)
+
+location.reload()
+
+}
+
+},1000)
+
+newRound()
 
 </script>
 
