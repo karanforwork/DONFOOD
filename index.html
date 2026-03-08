@@ -2,18 +2,16 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>🦁 Healthy Food Lion Game</title>
+<title>🦁 Healthy Food Game</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
-
 body{
 margin:0;
 overflow:hidden;
-font-family:sans-serif;
-background:black;
+font-family:Arial;
 color:white;
 text-align:center;
 }
@@ -22,83 +20,80 @@ video{
 position:fixed;
 top:0;
 left:0;
-width:100vw;
-height:100vh;
+width:100%;
+height:100%;
 object-fit:cover;
 transform:scaleX(-1);
 z-index:-1;
 }
 
-#ui{
-position:absolute;
-top:20px;
-width:100%;
-text-align:center;
-font-size:28px;
-}
-
-#food{
-font-size:80px;
-margin-top:40px;
-}
-
-.choices{
-position:absolute;
-bottom:60px;
-width:100%;
-display:flex;
-justify-content:space-around;
-}
-
-.choice{
-width:200px;
-height:120px;
-border-radius:20px;
-font-size:28px;
-display:flex;
-align-items:center;
-justify-content:center;
+#title{
+font-size:42px;
+margin-top:10px;
 font-weight:bold;
-}
-
-.green{background:#2ecc71;}
-.yellow{background:#f1c40f;}
-.red{background:#e74c3c;}
-
-.glow{
-box-shadow:0 0 40px white;
-transform:scale(1.1);
+text-shadow:0 0 10px black;
 }
 
 #lion{
-position:absolute;
-top:80px;
-left:50%;
-transform:translateX(-50%);
 font-size:80px;
-animation:bounce 1s infinite;
 }
 
-@keyframes bounce{
-0%{transform:translateX(-50%) translateY(0)}
-50%{transform:translateX(-50%) translateY(-10px)}
-100%{transform:translateX(-50%) translateY(0)}
+#food{
+font-size:120px;
+margin-top:20px;
 }
 
-#timer{
+#choices{
 position:absolute;
-top:20px;
-right:30px;
-font-size:30px;
+bottom:70px;
+width:100%;
+display:flex;
+justify-content:center;
+gap:70px;
 }
 
-#score{
+.choice{
+padding:25px 60px;
+font-size:30px;
+border-radius:25px;
+transition:0.2s;
+box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
+
+.green{background:#22c55e}
+.yellow{background:#eab308}
+.red{background:#ef4444}
+
+.glow{
+box-shadow:0 0 40px yellow;
+transform:scale(1.1);
+}
+
+#scoreBox{
 position:absolute;
-top:20px;
-left:30px;
-font-size:30px;
+top:15px;
+left:20px;
+font-size:26px;
+text-shadow:0 0 10px black;
 }
 
+#timeBox{
+position:absolute;
+top:15px;
+right:20px;
+font-size:26px;
+text-shadow:0 0 10px black;
+}
+
+#cursor{
+position:absolute;
+width:50px;
+height:50px;
+border-radius:50%;
+background:yellow;
+opacity:0.8;
+pointer-events:none;
+}
 </style>
 </head>
 
@@ -106,97 +101,178 @@ font-size:30px;
 
 <video id="video" autoplay playsinline></video>
 
+<div id="cursor"></div>
+
+<div id="scoreBox">⭐ Score <span id="score">0</span></div>
+<div id="timeBox">⏱ <span id="time">60</span></div>
+
+<div id="title">🦁 Healthy Food Game</div>
 <div id="lion">🦁</div>
 
-<div id="score">Score: 0</div>
-<div id="timer">60</div>
+<div id="food"></div>
 
-<div id="ui">
-
-<div id="food">🍎</div>
-
-</div>
-
-<div class="choices">
-
-<div class="choice green" data-type="green">
-🟢 กินบ่อย
-</div>
-
-<div class="choice yellow" data-type="yellow">
-🟡 กินพอดี
-</div>
-
-<div class="choice red" data-type="red">
-🔴 กินแต่น้อย
-</div>
-
-</div>
-
-<audio id="music" loop
-src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_cfdc0f0eaa.mp3?filename=chinese-new-year-112194.mp3">
-</audio>
-
-<audio id="correct"
-src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_5d5a1a4f98.mp3?filename=success-1-6297.mp3">
-</audio>
+<div id="choices"></div>
 
 <script>
-
-const video=document.getElementById("video")
-
-navigator.mediaDevices.getUserMedia({video:true})
-.then(stream=>{
-video.srcObject=stream
-})
 
 const foods=[
 {emoji:"🍎",type:"green"},
 {emoji:"🥦",type:"green"},
-{emoji:"🍌",type:"yellow"},
+{emoji:"🍉",type:"green"},
+{emoji:"🍌",type:"green"},
+{emoji:"🍚",type:"yellow"},
+{emoji:"🍞",type:"yellow"},
 {emoji:"🥚",type:"yellow"},
+{emoji:"🍗",type:"yellow"},
+{emoji:"🍔",type:"red"},
 {emoji:"🍟",type:"red"},
-{emoji:"🍔",type:"red"}
+{emoji:"🍕",type:"red"},
+{emoji:"🍩",type:"red"}
 ]
 
-let current=null
+let currentFood
 let score=0
 let time=60
 
-function newFood(){
+const foodEl=document.getElementById("food")
+const choicesEl=document.getElementById("choices")
+const scoreEl=document.getElementById("score")
+const timeEl=document.getElementById("time")
+const cursor=document.getElementById("cursor")
 
-current=foods[Math.floor(Math.random()*foods.length)]
+let hoverButton=null
+let hoverStart=0
 
-document.getElementById("food").innerText=current.emoji
+function newRound(){
+
+currentFood=foods[Math.floor(Math.random()*foods.length)]
+
+foodEl.innerText=currentFood.emoji
+
+choicesEl.innerHTML=""
+
+let types=["green","yellow","red"]
+
+types.sort(()=>0.5-Math.random())
+
+types=types.slice(0,2)
+
+types.forEach(type=>{
+
+let btn=document.createElement("div")
+
+btn.className="choice "+type
+
+btn.dataset.type=type
+
+if(type=="green")btn.innerText="🟢 กินบ่อย"
+if(type=="yellow")btn.innerText="🟡 กินพอดี"
+if(type=="red")btn.innerText="🔴 กินแต่น้อย"
+
+choicesEl.appendChild(btn)
+
+})
 
 }
 
 function answer(type){
 
-if(type===current.type){
-
+if(type==currentFood.type){
 score++
-document.getElementById("correct").play()
+scoreEl.innerText=score
+}
+
+newRound()
 
 }
 
-document.getElementById("score").innerText="Score: "+score
+function checkTouch(x,y){
 
-newFood()
-
-}
+let touched=null
 
 document.querySelectorAll(".choice").forEach(btn=>{
-btn.onclick=()=>answer(btn.dataset.type)
+
+btn.classList.remove("glow")
+
+let r=btn.getBoundingClientRect()
+
+let padding=120
+
+if(
+x>r.left-padding &&
+x<r.right+padding &&
+y>r.top-padding &&
+y<r.bottom+padding
+){
+touched=btn
+btn.classList.add("glow")
+}
+
 })
 
-newFood()
+if(touched){
+
+if(hoverButton!=touched){
+hoverButton=touched
+hoverStart=Date.now()
+}
+
+if(Date.now()-hoverStart>700){
+answer(touched.dataset.type)
+hoverButton=null
+}
+
+}else{
+hoverButton=null
+}
+
+}
+
+const video=document.getElementById("video")
+
+const hands=new Hands({
+locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+})
+
+hands.setOptions({
+maxNumHands:1,
+minDetectionConfidence:0.7,
+minTrackingConfidence:0.7
+})
+
+hands.onResults(results=>{
+
+if(results.multiHandLandmarks){
+
+let hand=results.multiHandLandmarks[0]
+let palm=hand[9]
+
+let x=(1-palm.x)*window.innerWidth
+let y=palm.y*window.innerHeight
+
+cursor.style.left=x+"px"
+cursor.style.top=y+"px"
+
+checkTouch(x,y)
+
+}
+
+})
+
+const camera=new Camera(video,{
+onFrame:async()=>{
+await hands.send({image:video})
+},
+width:1280,
+height:720
+})
+
+camera.start()
 
 setInterval(()=>{
 
 time--
-
-document.getElementById("timer").innerText=time
+timeEl.innerText=time
 
 if(time<=0){
 alert("หมดเวลา คะแนน: "+score)
@@ -205,9 +281,7 @@ location.reload()
 
 },1000)
 
-document.body.onclick=()=>{
-document.getElementById("music").play()
-}
+newRound()
 
 </script>
 
