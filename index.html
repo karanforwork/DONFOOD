@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>เกมอาหาร 3 สี 🦁</title>
+<title>lion food</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -10,57 +10,60 @@
 <style>
 
 body{
-margin:0;
 font-family:sans-serif;
-background:linear-gradient(#b30000,#ffcc00);
 text-align:center;
-color:white;
-overflow:hidden;
+background:#f2f2f2;
 }
 
 h1{
-font-size:50px;
-margin-top:10px;
-}
-
-#game{
-margin-top:20px;
-}
-
-.food{
-font-size:60px;
-margin:30px;
-}
-
-button{
 font-size:40px;
-padding:30px;
-margin:20px;
-width:300px;
-border:none;
-border-radius:20px;
-cursor:pointer;
 }
 
-.green{background:#2ecc71}
-.yellow{background:#f1c40f}
-.red{background:#e74c3c}
+#video{
+position:absolute;
+left:0;
+top:0;
+transform:scaleX(-1);
+}
 
-#pointer{
+#cursor{
 position:absolute;
 width:40px;
 height:40px;
-background:cyan;
+background:red;
 border-radius:50%;
 pointer-events:none;
 }
 
-video{
-position:absolute;
-right:10px;
-bottom:10px;
-width:200px;
-border-radius:10px;
+.container{
+margin-top:420px;
+}
+
+.food{
+font-size:36px;
+margin:10px;
+}
+
+button{
+font-size:30px;
+padding:25px;
+margin:15px;
+border:none;
+border-radius:12px;
+width:260px;
+}
+
+.green{background:#4CAF50;color:white}
+.yellow{background:#FFC107}
+.red{background:#F44336;color:white}
+
+#score{
+font-size:30px;
+margin-top:10px;
+}
+
+#timer{
+font-size:28px;
 }
 
 </style>
@@ -68,130 +71,156 @@ border-radius:10px;
 
 <body>
 
-<h1>🦁 เกมอาหาร 3 สี</h1>
+<h1>🍎 เกมอาหาร 3 สี</h1>
+<div id="timer">เวลา: 60</div>
+<div id="score">คะแนน: 0</div>
 
-<div id="game">
-<div class="food" id="food">🍎</div>
+<video id="video" width="640" height="480" autoplay></video>
+<div id="cursor"></div>
 
-<button class="green" onclick="answer('green')">เขียว</button>
-<button class="yellow" onclick="answer('yellow')">เหลือง</button>
-<button class="red" onclick="answer('red')">แดง</button>
+<div class="container">
+<div id="food" class="food"></div>
 
-<h2 id="score">คะแนน 0</h2>
+<button class="green" id="g">เขียว</button>
+<button class="yellow" id="y">เหลือง</button>
+<button class="red" id="r">แดง</button>
 </div>
-
-<div id="pointer"></div>
-
-<video id="video" autoplay playsinline></video>
-
-<audio id="drum" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3a36d62c36.mp3?filename=chinese-drum-110045.mp3"></audio>
 
 <script>
 
 const foods=[
-{name:"🥦",type:"green"},
-{name:"🥬",type:"green"},
-{name:"🥒",type:"green"},
-{name:"🍏",type:"green"},
-{name:"🥑",type:"green"},
-{name:"🥕",type:"yellow"},
-{name:"🌽",type:"yellow"},
-{name:"🍌",type:"yellow"},
-{name:"🍍",type:"yellow"},
-{name:"🥭",type:"yellow"},
-{name:"🍟",type:"red"},
-{name:"🍔",type:"red"},
-{name:"🍕",type:"red"},
-{name:"🍩",type:"red"},
-{name:"🍗",type:"red"},
-{name:"🍉",type:"green"},
-{name:"🍋",type:"yellow"},
-{name:"🥨",type:"red"},
-{name:"🍠",type:"yellow"},
-{name:"🥗",type:"green"}
-]
+{name:"ผักบุ้ง",type:"green"},
+{name:"แครอท",type:"green"},
+{name:"บรอกโคลี",type:"green"},
+{name:"แตงกวา",type:"green"},
+{name:"ผักกาด",type:"green"},
+{name:"กล้วย",type:"yellow"},
+{name:"ข้าว",type:"yellow"},
+{name:"มันฝรั่ง",type:"yellow"},
+{name:"ขนมปัง",type:"yellow"},
+{name:"ไข่",type:"yellow"},
+{name:"เค้ก",type:"red"},
+{name:"ไอศกรีม",type:"red"},
+{name:"น้ำอัดลม",type:"red"},
+{name:"ลูกอม",type:"red"},
+{name:"โดนัท",type:"red"},
+{name:"มะม่วง",type:"yellow"},
+{name:"ส้ม",type:"yellow"},
+{name:"ผักคะน้า",type:"green"},
+{name:"ช็อกโกแลต",type:"red"},
+{name:"เฟรนช์ฟราย",type:"red"}
+];
 
-let current
-let score=0
+let current;
+let score=0;
+let time=60;
 
 function newFood(){
-current=foods[Math.floor(Math.random()*foods.length)]
-document.getElementById("food").innerText=current.name
+current=foods[Math.floor(Math.random()*foods.length)];
+document.getElementById("food").innerText=current.name;
 }
 
-function answer(color){
-
-if(color==current.type){
-score++
-document.getElementById("drum").play()
+function answer(type){
+if(type==current.type){
+score++;
+document.getElementById("score").innerText="คะแนน: "+score;
+}
+newFood();
 }
 
-document.getElementById("score").innerText="คะแนน "+score
-newFood()
+document.getElementById("g").onclick=()=>answer("green");
+document.getElementById("y").onclick=()=>answer("yellow");
+document.getElementById("r").onclick=()=>answer("red");
 
+newFood();
+
+setInterval(()=>{
+time--;
+document.getElementById("timer").innerText="เวลา: "+time;
+if(time<=0){
+alert("หมดเวลา คะแนน "+score);
+location.reload();
 }
+},1000);
 
-newFood()
-
-const video=document.getElementById("video")
-const pointer=document.getElementById("pointer")
+const video=document.getElementById("video");
+const cursor=document.getElementById("cursor");
 
 const hands=new Hands({
-locateFile:(file)=>{
-return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-}
-})
+locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
 
 hands.setOptions({
 maxNumHands:1,
+modelComplexity:1,
 minDetectionConfidence:0.7,
 minTrackingConfidence:0.7
-})
+});
+
+let hoverButton=null;
+let hoverStart=0;
 
 hands.onResults(results=>{
-
 if(results.multiHandLandmarks.length>0){
 
-const hand=results.multiHandLandmarks[0]
+let p=results.multiHandLandmarks[0][8];
 
-const x=hand[8].x*window.innerWidth
-const y=hand[8].y*window.innerHeight
+let x=(1-p.x)*video.width;
+let y=p.y*video.height;
 
-pointer.style.left=x+"px"
-pointer.style.top=y+"px"
+cursor.style.left=x+"px";
+cursor.style.top=y+"px";
 
-const buttons=document.querySelectorAll("button")
-
-buttons.forEach(btn=>{
-
-const rect=btn.getBoundingClientRect()
-
-if(
-x>rect.left &&
-x<rect.right &&
-y>rect.top &&
-y<rect.bottom
-){
-
-btn.click()
+checkHover(x,y);
 
 }
-
-})
-
-}
-
-})
+});
 
 const camera=new Camera(video,{
 onFrame:async()=>{
-await hands.send({image:video})
+await hands.send({image:video});
 },
 width:640,
 height:480
-})
+});
 
-camera.start()
+camera.start();
+
+function checkHover(x,y){
+
+let buttons=document.querySelectorAll("button");
+let found=null;
+
+buttons.forEach(btn=>{
+let r=btn.getBoundingClientRect();
+
+if(
+x>r.left &&
+x<r.right &&
+y>r.top &&
+y<r.bottom
+){
+found=btn;
+}
+});
+
+if(found){
+
+if(found!==hoverButton){
+hoverButton=found;
+hoverStart=Date.now();
+}
+
+if(Date.now()-hoverStart>600){
+found.click();
+hoverButton=null;
+}
+
+}else{
+hoverButton=null;
+}
+
+}
 
 </script>
 
