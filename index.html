@@ -144,9 +144,9 @@ transform:scale(1.05);
 
 <div id="food" class="food"></div>
 
-<button class="green" id="g">🥬 อาหารดี</button>
-<button class="yellow" id="y">🍚 พลังงาน</button>
-<button class="red" id="r">🍩 ของหวาน</button>
+<button class="green" id="g">🟢 กินได้บ่อย</button>
+<button class="yellow" id="y">🟡 กินแต่พอดี</button>
+<button class="red" id="r">🔴 กินนานๆครั้ง</button>
 
 </div>
 
@@ -157,24 +157,31 @@ let gameStarted=false;
 
 const foods=[
 
-{name:"🥬",type:"green"},
-{name:"🥦",type:"green"},
-{name:"🥕",type:"green"},
-{name:"🥒",type:"green"},
+// 🟢 กินได้บ่อย (อาหารดี)
+{name:"🥦 บรอกโคลี",type:"green"},
+{name:"🥕 แครอท",type:"green"},
+{name:"🥬 ผักใบเขียว",type:"green"},
+{name:"🥒 แตงกวา",type:"green"},
+{name:"🍎 แอปเปิล",type:"green"},
+{name:"🍊 ส้ม",type:"green"},
+{name:"🍉 แตงโม",type:"green"},
 
-{name:"🍚",type:"yellow"},
-{name:"🍞",type:"yellow"},
-{name:"🍌",type:"yellow"},
-{name:"🥔",type:"yellow"},
-{name:"🥭",type:"yellow"},
-{name:"🍊",type:"yellow"},
+// 🟡 กินได้แต่พอดี (ให้พลังงาน)
+{name:"🍚 ข้าว",type:"yellow"},
+{name:"🍞 ขนมปัง",type:"yellow"},
+{name:"🍌 กล้วย",type:"yellow"},
+{name:"🥔 มันฝรั่ง",type:"yellow"},
+{name:"🥚 ไข่",type:"yellow"},
+{name:"🥛 นม",type:"yellow"},
 
-{name:"🍰",type:"red"},
-{name:"🍦",type:"red"},
-{name:"🍩",type:"red"},
-{name:"🍬",type:"red"},
-{name:"🍫",type:"red"},
-{name:"🍟",type:"red"}
+// 🔴 กินนานๆครั้ง (ของหวาน / ไขมันสูง)
+{name:"🍰 เค้ก",type:"red"},
+{name:"🍦 ไอศกรีม",type:"red"},
+{name:"🍩 โดนัท",type:"red"},
+{name:"🍬 ลูกอม",type:"red"},
+{name:"🍫 ช็อกโกแลต",type:"red"},
+{name:"🍟 เฟรนช์ฟราย",type:"red"},
+{name:"🥤 น้ำอัดลม",type:"red"}
 
 ];
 
