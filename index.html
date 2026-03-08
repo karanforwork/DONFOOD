@@ -2,26 +2,47 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>เกมอาหาร 3 สี</title>
+<title>🦁 Lion Dance Food Game</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
+
 body{
+margin:0;
 font-family:sans-serif;
 text-align:center;
-background:#f2f2f2;
+background:
+url("https://images.unsplash.com/photo-1513151233558-d860c5398176")
+center/cover no-repeat;
+color:white;
+overflow:hidden;
+}
+
+.overlay{
+background:rgba(120,0,0,0.7);
+position:absolute;
+width:100%;
+height:100%;
+top:0;
+left:0;
 }
 
 h1{
-font-size:40px;
+font-size:48px;
+margin-top:10px;
+}
+
+#lion{
+font-size:90px;
 }
 
 #video{
 position:absolute;
-left:0;
 top:0;
+left:0;
+opacity:0.15;
 transform:scaleX(-1);
 }
 
@@ -29,175 +50,209 @@ transform:scaleX(-1);
 position:absolute;
 width:40px;
 height:40px;
-background:red;
+background:gold;
 border-radius:50%;
+border:4px solid white;
 pointer-events:none;
 }
 
-.container{
-margin-top:420px;
-}
-
-.food{
-font-size:36px;
-margin:10px;
+.game{
+position:absolute;
+bottom:80px;
+width:100%;
 }
 
 button{
-font-size:30px;
+font-size:34px;
 padding:25px;
 margin:15px;
 border:none;
-border-radius:12px;
-width:260px;
+border-radius:14px;
+width:220px;
 }
 
-.green{background:#4CAF50;color:white}
-.yellow{background:#FFC107}
-.red{background:#F44336;color:white}
+.green{background:#2ecc71;color:white}
+.yellow{background:#f1c40f}
+.red{background:#e74c3c;color:white}
 
-#score{
-font-size:30px;
-margin-top:10px;
+#food{
+font-size:42px;
+margin:20px;
 }
 
-#timer{
+#score,#timer{
 font-size:28px;
 }
+
 </style>
 </head>
 
 <body>
 
-<h1>🍎 เกมอาหาร 3 สี</h1>
+<div class="overlay"></div>
+
+<h1>🦁 Lion Dance Food Game</h1>
+<div id="lion">🦁</div>
+
 <div id="timer">เวลา: 60</div>
 <div id="score">คะแนน: 0</div>
 
 <video id="video" width="640" height="480" autoplay></video>
 <div id="cursor"></div>
 
-<div class="container">
-<div id="food" class="food"></div>
+<div class="game">
 
-<button class="green" id="g">เขียว</button>
-<button class="yellow" id="y">เหลือง</button>
-<button class="red" id="r">แดง</button>
+<div id="food"></div>
+
+<button class="green" id="g">🟢 เขียว</button>
+<button class="yellow" id="y">🟡 เหลือง</button>
+<button class="red" id="r">🔴 แดง</button>
+
 </div>
+
+<audio id="drum" src="https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3"></audio>
 
 <script>
 
 const foods=[
-{name:"ผักบุ้ง",type:"green"},
-{name:"แครอท",type:"green"},
-{name:"บรอกโคลี",type:"green"},
-{name:"แตงกวา",type:"green"},
-{name:"ผักกาด",type:"green"},
-{name:"กล้วย",type:"yellow"},
-{name:"ข้าว",type:"yellow"},
-{name:"มันฝรั่ง",type:"yellow"},
-{name:"ขนมปัง",type:"yellow"},
-{name:"ไข่",type:"yellow"},
-{name:"เค้ก",type:"red"},
-{name:"ไอศกรีม",type:"red"},
-{name:"น้ำอัดลม",type:"red"},
-{name:"ลูกอม",type:"red"},
-{name:"โดนัท",type:"red"},
-{name:"มะม่วง",type:"yellow"},
-{name:"ส้ม",type:"yellow"},
-{name:"ผักคะน้า",type:"green"},
-{name:"ช็อกโกแลต",type:"red"},
-{name:"เฟรนช์ฟราย",type:"red"}
-];
+{name:"🥦 บรอกโคลี",type:"green"},
+{name:"🥒 แตงกวา",type:"green"},
+{name:"🥬 ผักกาด",type:"green"},
+{name:"🍚 ข้าว",type:"yellow"},
+{name:"🍌 กล้วย",type:"yellow"},
+{name:"🍞 ขนมปัง",type:"yellow"},
+{name:"🍰 เค้ก",type:"red"},
+{name:"🍬 ลูกอม",type:"red"},
+{name:"🥤 น้ำอัดลม",type:"red"}
+]
 
-let current;
-let score=0;
-let time=60;
+let score=0
+let time=60
+let current
 
 function newFood(){
-current=foods[Math.floor(Math.random()*foods.length)];
-document.getElementById("food").innerText=current.name;
+current=foods[Math.floor(Math.random()*foods.length)]
+food.innerText=current.name
 }
 
 function answer(type){
+
 if(type==current.type){
-score++;
-document.getElementById("score").innerText="คะแนน: "+score;
-}
-newFood();
+
+score++
+scoreText()
+
+lion.innerText="🦁😋"
+drum.play()
+
+setTimeout(()=>lion.innerText="🦁",600)
+
+}else{
+
+lion.innerText="🦁😵"
+
+setTimeout(()=>lion.innerText="🦁",600)
+
 }
 
-document.getElementById("g").onclick=()=>answer("green");
-document.getElementById("y").onclick=()=>answer("yellow");
-document.getElementById("r").onclick=()=>answer("red");
+newFood()
+}
 
-newFood();
+function scoreText(){
+scoreDiv.innerText="คะแนน: "+score
+}
+
+g.onclick=()=>answer("green")
+y.onclick=()=>answer("yellow")
+r.onclick=()=>answer("red")
+
+const scoreDiv=document.getElementById("score")
+
+newFood()
 
 setInterval(()=>{
-time--;
-document.getElementById("timer").innerText="เวลา: "+time;
-if(time<=0){
-alert("หมดเวลา คะแนน "+score);
-location.reload();
-}
-},1000);
 
-const video=document.getElementById("video");
-const cursor=document.getElementById("cursor");
+time--
+
+timer.innerText="เวลา: "+time
+
+if(time<=0){
+alert("หมดเวลา คะแนน "+score)
+location.reload()
+}
+
+},1000)
+
+let cx=300
+let cy=300
+
+function smooth(x,y){
+cx=cx+(x-cx)*0.3
+cy=cy+(y-cy)*0.3
+cursor.style.left=cx+"px"
+cursor.style.top=cy+"px"
+}
+
+function checkHover(){
+
+let buttons=[g,y,r]
+
+buttons.forEach(b=>{
+
+let rect=b.getBoundingClientRect()
+
+if(
+cx>rect.left &&
+cx<rect.right &&
+cy>rect.top &&
+cy<rect.bottom
+){
+b.click()
+}
+
+})
+
+}
 
 const hands=new Hands({
-locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-});
+locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+})
 
 hands.setOptions({
 maxNumHands:1,
-modelComplexity:1,
 minDetectionConfidence:0.7,
 minTrackingConfidence:0.7
-});
+})
 
 hands.onResults(results=>{
+
 if(results.multiHandLandmarks.length>0){
 
-let p=results.multiHandLandmarks[0][8];
+let p=results.multiHandLandmarks[0][8]
 
-let x=(1-p.x)*window.innerWidth;
-let y=p.y*window.innerHeight;
+let x=(1-p.x)*window.innerWidth
+let y=p.y*window.innerHeight
 
-cursor.style.left=x+"px";
-cursor.style.top=y+"px";
+smooth(x,y)
 
-checkHover(x,y);
+checkHover()
 
 }
-});
+
+})
 
 const camera=new Camera(video,{
 onFrame:async()=>{
-await hands.send({image:video});
+await hands.send({image:video})
 },
 width:640,
 height:480
-});
+})
 
-camera.start();
+camera.start()
 
-function checkHover(x,y){
-
-let buttons=document.querySelectorAll("button");
-
-buttons.forEach(btn=>{
-let r=btn.getBoundingClientRect();
-
-if(
-x>r.left &&
-x<r.right &&
-y>r.top &&
-y<r.bottom
-){
-btn.click();
-}
-});
-
+document.body.onclick=()=>{
+document.documentElement.requestFullscreen()
 }
 
 </script>
