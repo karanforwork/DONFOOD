@@ -4,30 +4,27 @@
 <meta charset="UTF-8">
 <title>🦁 Healthy Food Game</title>
 
-<style>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
+<style>
 body{
-font-family: Arial;
-background:#1e293b;
+margin:0;
+font-family:Arial;
+background:#0f172a;
 color:white;
 text-align:center;
-margin:0;
 }
 
 header{
-background:#0f172a;
+background:#111827;
 padding:15px;
-font-size:28px;
-font-weight:bold;
-}
-
-#game{
-margin-top:30px;
+font-size:32px;
 }
 
 #lion{
 font-size:70px;
-transition:0.3s;
+transition:0.2s;
 }
 
 #food{
@@ -38,36 +35,33 @@ margin:20px;
 #choices{
 display:flex;
 justify-content:center;
-gap:40px;
+gap:50px;
 margin-top:20px;
 }
 
 .choice{
-padding:20px 40px;
-font-size:24px;
-border-radius:12px;
-cursor:pointer;
-border:none;
+width:260px;
+padding:30px;
+font-size:28px;
+border-radius:16px;
 }
 
 .green{background:#22c55e}
 .yellow{background:#eab308}
 .red{background:#ef4444}
 
-#scoreboard{
+#hud{
 margin-top:20px;
-font-size:20px;
-}
-
-#timer{
 font-size:24px;
-margin-top:10px;
 }
 
-#leaderboard{
-margin-top:20px;
+video{
+position:fixed;
+bottom:10px;
+right:10px;
+width:200px;
+border-radius:10px;
 }
-
 </style>
 </head>
 
@@ -75,26 +69,23 @@ margin-top:20px;
 
 <header>🦁 Healthy Food Game</header>
 
-<div id="game">
-
 <div id="lion">🦁</div>
 
 <div id="food">🍎</div>
 
 <div id="choices"></div>
 
-<div id="timer">⏱ Time: 30</div>
-
-<div id="scoreboard">⭐ Score: 0</div>
-
-<div id="leaderboard">
-🏆 Best Score: <span id="best">0</span>
+<div id="hud">
+⏱ <span id="time">60</span> |
+⭐ Score <span id="score">0</span> |
+🏆 Best <span id="best">0</span>
 </div>
 
-</div>
+<video id="video" autoplay></video>
 
-<audio id="correct" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
-<audio id="wrong" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"></audio>
+<audio autoplay loop>
+<source src="https://cdn.pixabay.com/audio/2022/03/15/audio_chinese_new_year_drum.mp3">
+</audio>
 
 <script>
 
@@ -102,34 +93,38 @@ const foods=[
 {emoji:"🍎",type:"green"},
 {emoji:"🥦",type:"green"},
 {emoji:"🍌",type:"green"},
+{emoji:"🍉",type:"green"},
 
 {emoji:"🍚",type:"yellow"},
 {emoji:"🍞",type:"yellow"},
 {emoji:"🥚",type:"yellow"},
+{emoji:"🍗",type:"yellow"},
 
 {emoji:"🍔",type:"red"},
 {emoji:"🍟",type:"red"},
+{emoji:"🍕",type:"red"},
 {emoji:"🍩",type:"red"}
 ]
 
 let score=0
-let time=30
+let time=60
 let currentFood
+let lock=false
 
 const foodEl=document.getElementById("food")
 const choicesEl=document.getElementById("choices")
-const scoreEl=document.getElementById("scoreboard")
-const timerEl=document.getElementById("timer")
+const scoreEl=document.getElementById("score")
+const timeEl=document.getElementById("time")
 const lion=document.getElementById("lion")
 const bestEl=document.getElementById("best")
 
-let best=localStorage.getItem("best")||0
-bestEl.textContent=best
+let best=localStorage.getItem("lionBest")||0
+bestEl.innerText=best
 
 function newRound(){
 
 currentFood=foods[Math.floor(Math.random()*foods.length)]
-foodEl.textContent=currentFood.emoji
+foodEl.innerText=currentFood.emoji
 
 choicesEl.innerHTML=""
 
@@ -139,78 +134,120 @@ types=types.slice(0,2)
 
 types.forEach(type=>{
 
-let btn=document.createElement("button")
+let div=document.createElement("div")
+div.className="choice "+type
+div.dataset.type=type
 
-btn.className="choice "+type
+if(type=="green")div.innerText="🟢 กินได้บ่อย"
+if(type=="yellow")div.innerText="🟡 กินพอดี"
+if(type=="red")div.innerText="🔴 กินแต่น้อย"
 
-if(type=="green")btn.textContent="🟢 กินได้บ่อย"
-if(type=="yellow")btn.textContent="🟡 กินพอดี"
-if(type=="red")btn.textContent="🔴 กินแต่น้อย"
-
-btn.onclick=()=>check(type)
-
-choicesEl.appendChild(btn)
+choicesEl.appendChild(div)
 
 })
 
 }
 
-function check(choice){
+function answer(type){
 
-if(choice==currentFood.type){
+if(lock)return
+lock=true
+
+if(type==currentFood.type){
 
 score++
-scoreEl.textContent="⭐ Score: "+score
+scoreEl.innerText=score
 
-document.getElementById("correct").play()
+lion.style.transform="scale(1.4)"
+setTimeout(()=>{lion.style.transform="scale(1)"},200)
 
-lion.style.transform="scale(1.3)"
-
-setTimeout(()=>{
-lion.style.transform="scale(1)"
-},200)
-
-}else{
-
-document.getElementById("wrong").play()
-
-lion.textContent="🦁😵"
+}
 
 setTimeout(()=>{
-lion.textContent="🦁"
+lock=false
+newRound()
 },400)
 
 }
 
-newRound()
+function checkTouch(x,y){
+
+document.querySelectorAll(".choice").forEach(btn=>{
+
+let r=btn.getBoundingClientRect()
+
+if(
+x>r.left &&
+x<r.right &&
+y>r.top &&
+y<r.bottom
+){
+answer(btn.dataset.type)
+}
+
+})
 
 }
 
-function startTimer(){
+const video=document.getElementById("video")
+
+const hands=new Hands({
+locateFile:(file)=>{
+return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+}
+})
+
+hands.setOptions({
+maxNumHands:1,
+minDetectionConfidence:0.7,
+minTrackingConfidence:0.7
+})
+
+hands.onResults(results=>{
+
+if(results.multiHandLandmarks){
+
+let hand=results.multiHandLandmarks[0]
+let palm=hand[9]
+
+let x=palm.x*window.innerWidth
+let y=palm.y*window.innerHeight
+
+checkTouch(x,y)
+
+}
+
+})
+
+const camera=new Camera(video,{
+onFrame:async()=>{
+await hands.send({image:video})
+},
+width:640,
+height:480
+})
+
+camera.start()
 
 setInterval(()=>{
 
 time--
-timerEl.textContent="⏱ Time: "+time
+timeEl.innerText=time
 
 if(time<=0){
 
-alert("Game Over! Score: "+score)
-
 if(score>best){
-localStorage.setItem("best",score)
+localStorage.setItem("lionBest",score)
 }
 
+alert("Game Over! Score: "+score)
 location.reload()
 
 }
 
 },1000)
 
-}
-
 newRound()
-startTimer()
 
 </script>
 
