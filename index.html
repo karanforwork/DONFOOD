@@ -9,17 +9,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
-
 body{
 margin:0;
 overflow:hidden;
 font-family:sans-serif;
-color:white;
 text-align:center;
+color:white;
 }
 
 video{
 position:fixed;
+top:0;
+left:0;
 width:100%;
 height:100%;
 object-fit:cover;
@@ -58,7 +59,7 @@ border-radius:50%;
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:80px;
+font-size:60px;
 color:white;
 }
 
@@ -87,7 +88,6 @@ padding:10px 20px;
 border-radius:10px;
 font-size:18px;
 }
-
 </style>
 </head>
 
@@ -110,10 +110,6 @@ font-size:18px;
 <div id="red" class="choice red right">แดง</div>
 
 <div id="leaderboard"></div>
-
-<audio id="correctSound">
-<source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg">
-</audio>
 
 <script>
 
@@ -146,71 +142,55 @@ let current
 let score=0
 
 function nextFood(){
-
 current=foods[Math.floor(Math.random()*foods.length)]
-
-food.innerText=current.name
-
+document.getElementById("food").innerText=current.name
 }
 
 function choose(color){
-
 if(color===current.color){
-
 score++
-scoreEl.innerText=score
-correctSound.play()
-
+document.getElementById("score").innerText=score
+}
+nextFood()
 }
 
-nextFood()
-
-}
-
-const scoreEl=document.getElementById("score")
-
-green.onclick=()=>choose("green")
-yellow.onclick=()=>choose("yellow")
-red.onclick=()=>choose("red")
+document.getElementById("green").onclick=()=>choose("green")
+document.getElementById("yellow").onclick=()=>choose("yellow")
+document.getElementById("red").onclick=()=>choose("red")
 
 nextFood()
-
-// camera
 
 navigator.mediaDevices.getUserMedia({video:true})
 .then(stream=>{
 video.srcObject=stream
 })
 
-// timer
-
 let time=60
 
 setInterval(()=>{
-
 time--
 timer.innerText=time
 
 if(time<=0){
-
 saveScore(score)
 alert("จบเกม คะแนน "+score)
 location.reload()
-
 }
 
 },1000)
 
-// leaderboard
-
 function saveScore(s){
 
 let scores=JSON.parse(localStorage.getItem("scores")||"[]")
+
 scores.push(s)
+
 scores.sort((a,b)=>b-a)
+
 scores=scores.slice(0,5)
 
 localStorage.setItem("scores",JSON.stringify(scores))
+
 showScores()
 
 }
@@ -219,13 +199,11 @@ function showScores(){
 
 let scores=JSON.parse(localStorage.getItem("scores")||"[]")
 
-leaderboard.innerHTML="Top Scores: "+scores.join(" , ")
+document.getElementById("leaderboard").innerHTML="Top Scores: "+scores.join(" , ")
 
 }
 
 showScores()
-
-// hand tracking
 
 const hands=new Hands({
 locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
@@ -239,7 +217,7 @@ minTrackingConfidence:0.7
 
 hands.onResults(results=>{
 
-if(mode.value!=="hand") return
+if(document.getElementById("mode").value!=="hand") return
 
 if(results.multiHandLandmarks.length>0){
 
